@@ -1,0 +1,17 @@
+description "Gunicorn server for SITENAME"
+
+start on net-device-up
+stop on shutdown
+
+respawn
+
+setuid dvoong
+chdir /var/www/SITENAME/source
+
+exec ../virtualenv/bin/gunicorn \
+    --bind unix:/tmp/SITENAME.socket \
+    --access-logfile ../access.log \
+    --error-logfile ../error.log \
+    --log-file=- \
+    superlists.wsgi:application \
+    2> ../log.log

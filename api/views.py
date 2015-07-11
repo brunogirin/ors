@@ -9,4 +9,4 @@ def api_documentation(request):
 
 def house_codes(request):
     house_codes = [house_code.code for house_code in HouseCode.objects.all()]
-    return HttpResponse(json.dumps({"content": house_codes}), content_type="application/json")
+    return HttpResponse(json.dumps({"content": house_codes, "status": 200}), content_type="application/json")

@@ -40,11 +40,11 @@ def _update_settings(source_folder, site_name):
 def _update_virtualenv(source_folder):
     virtualenv_folder = source_folder + '/../virtualenv'
     if not exists(virtualenv_folder + '/bin/pip'):
-        run('virtualenv --python=python3 %s' % (virtualenv_folder,))
+        run('virtualenv %s' % (virtualenv_folder,))
     run('%s/bin/pip install -r %s/requirements.txt' % (virtualenv_folder, source_folder))
 
 def _update_static_files(source_folder):
-    run('cd %s && ../virtualenv/bin/python3 manage.py collectstatic --noinput' % (source_folder,))
+    run('cd %s && ../virtualenv/bin/python manage.py collectstatic --noinput' % (source_folder,))
 
 def _update_database(source_folder):
-    run('cd %s && ../virtualenv/bin/python3 manage.py migrate --noinput' % (source_folder,))
+    run('cd %s && ../virtualenv/bin/python manage.py migrate --noinput' % (source_folder,))

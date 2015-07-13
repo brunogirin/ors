@@ -10,6 +10,7 @@ def api_documentation(request):
 def house_codes(request):
     house_codes = [house_code.code for house_code in HouseCode.objects.all()]
     if request.method == "POST":
+        HouseCode.objects.all().delete()
         house_codes = request.POST['house-codes'].split('\r\n')
         for house_code in house_codes:
             HouseCode.objects.create(code=house_code)

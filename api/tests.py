@@ -43,6 +43,18 @@ class ApiHouseCodesTest(TestCase):
         self.assertEqual(housecode1.code, "housecode1")
         self.assertEqual(housecode2.code, "housecode2")
         self.assertEqual(housecode3.code, "housecode3")
+
+    def test_POST_overwrites_existing_house_codes(self):
+        response = self.client.post("/api/house-codes", data={"house-codes": "housecode1\r\nhousecode2\r\nhousecode3"}) 
+        response = self.client.post("/api/house-codes", data={"house-codes": "new_housecode1\r\nnew_housecode2\r\nnew_housecode3"}) 
+        self.assertEqual(HouseCode.objects.count(), 3)
+        iter = HouseCode.objects.iterator()
+        housecode1 = iter.next()
+        housecode2 = iter.next()
+        housecode3 = iter.next()
+        self.assertEqual(housecode1.code, "new_housecode1")
+        self.assertEqual(housecode2.code, "new_housecode2")
+        self.assertEqual(housecode3.code, "new_housecode3")
     
     def test_house_codes_url(self):
         found = resolve('/api/house-codes')

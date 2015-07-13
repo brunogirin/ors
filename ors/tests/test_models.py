@@ -11,4 +11,9 @@ class HouseCodeTests(TestCase):
             house_code.full_clean()
             house_code.save()
 
-            
+    def test_empty_input_throws_validation_error(self):
+        house_code = HouseCode(code="")
+        with self.assertRaises(ValidationError):
+            house_code.full_clean()
+            house_code.save()
+

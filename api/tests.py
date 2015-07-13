@@ -27,6 +27,15 @@ class ApiHouseCodesTest(TestCase):
         self.client.post = self.response_wrapper(self.client.post)
         self.client.get = self.response_wrapper(self.client.get)
 
+    def test_POST_blank_does_not_save(self):
+        self.client.post("/api/house-codes", data={"house-codes": ""})
+        self.assertEqual(HouseCode.objects.count(), 0)
+
+    def test_POST_blank_returns_blank_house_code_warning(self):
+        response = json.loads(self.client.post("/api/house-codes", data={"house-codes": ""}).content)
+        self.assertIn("warnings", response)
+        self.assertEqual(response["warnings"], ["ignored empty house code(s)"])
+
     def test_POST_saves_a_house_code(self):
         response = self.client.post("/api/house-codes", data={"house-codes": "housecode1"})
         self.assertEqual(HouseCode.objects.count(), 1)

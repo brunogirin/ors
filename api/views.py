@@ -21,9 +21,13 @@ def house_codes(request):
             try:
                 house_code.full_clean()
                 house_code.save()
-            except ValidationError:
-                warnings.append('ignored duplicate: {}'.format(house_code.code))
-                house_codes = [house_code.code for house_code in HouseCode.objects.all()]
+            except ValidationError as e:
+                if dict(e)['code'] == ['This field cannot be blank.']:
+                    if 'ignored empty house code(s)' not in warnings:
+                        warnings.append('ignored empty house code(s)')
+                else:
+                    warnings.append('ignored duplicate: {}'.format(house_code.code))
+        house_codes = [house_code.code for house_code in HouseCode.objects.all()]
         response = {}
         response["content"] = house_codes
         response["status"] = 200

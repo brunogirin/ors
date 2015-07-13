@@ -1,4 +1,4 @@
 from django.db import models
 
 class HouseCode(models.Model):
-    code = models.CharField(max_length=50)
+    code = models.CharField(primary_key=True, max_length=50)

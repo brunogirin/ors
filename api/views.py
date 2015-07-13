@@ -1,6 +1,7 @@
 import json
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.core.exceptions import ValidationError
 from ors.models import HouseCode
 # Create your views here.
 
@@ -9,10 +10,23 @@ def api_documentation(request):
 
 def house_codes(request):
     house_codes = [house_code.code for house_code in HouseCode.objects.all()]
-    if request.method == "POST":
+    if request.method == "GET":
+        return HttpResponse(json.dumps({"content": house_codes, "status": 200}), content_type="application/json")
+    else:
         HouseCode.objects.all().delete()
         house_codes = request.POST['house-codes'].split('\r\n')
+        warnings = []
         for house_code in house_codes:
-            HouseCode.objects.create(code=house_code)
-        house_codes = [house_code.code for house_code in HouseCode.objects.all()]
-    return HttpResponse(json.dumps({"content": house_codes, "status": 200}), content_type="application/json")
+            house_code = HouseCode(code=house_code)
+            try:
+                house_code.full_clean()
+                house_code.save()
+            except ValidationError:
+                warnings.append('ignored duplicate: {}'.format(house_code.code))
+                house_codes = [house_code.code for house_code in HouseCode.objects.all()]
+        response = {}
+        response["content"] = house_codes
+        response["status"] = 200
+        if len(warnings) >= 1:
+            response["warnings"] = warnings
+        return HttpResponse(json.dumps(response), content_type="application/json")

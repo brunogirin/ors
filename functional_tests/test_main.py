@@ -55,5 +55,15 @@ class MainTest(FunctionalTest):
         self.assertIn('"status": 200', self.browser.page_source)
         self.assertIn('"content": ["housecode2", "housecode3"]', self.browser.page_source) # note household1 has been overwritten
 
+        # user passes a list of housecodes with some duplicates
+        self.browser.get(self.server_url)
+        section = self.browser.find_element_by_id("id-post-house-codes-section")
+        input = section.find_element_by_id("id-house-codes-input")
+        input.send_keys("housecode1\nhousecode2\nhousecode1")
+        button = section.find_element_by_css_selector('input[type="submit"]')
+        button.click()
+        self.assertIn('"content": ["housecode1", "housecode2"]', self.browser.page_source)
+        self.assertIn('"warnings": ["ignored duplicate: housecode1"]', self.browser.page_source)
+
         # TODO: test for valid input returns relevant errors
         self.fail("finish tests")

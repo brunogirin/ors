@@ -30,6 +30,8 @@ class MainTest(FunctionalTest):
         button.click()
         self.assertTrue(self.browser.current_url.endswith('/api/house-codes'))
         # assert the returned json has status 200
+        self.assertIn('"status": 200', self.browser.page_source)
+        self.assertIn('"content": ["housecode1"]', self.browser.page_source)
 
         # user submits a request to get the house codes
         self.browser.get(self.server_url) # returns to homepage
@@ -37,17 +39,21 @@ class MainTest(FunctionalTest):
         button = section.find_element_by_css_selector('input[type="submit"]')
         button.click()
         # assert the returned json has housecode1 in it
+        self.assertIn('"content": ["housecode1"]', self.browser.page_source)
 
         # user tries to post multiply house codes
         self.browser.get(self.server_url)
         section = self.browser.find_element_by_id("id-post-house-codes-section")
-        input = house_codes_section.find_element_by_id("id-house-codes-input")
+        input = section.find_element_by_id("id-house-codes-input")
+        self.assertEqual(input.tag_name, 'textarea')
         input.send_keys("housecode2")
         input.send_keys("\n") # multiple entries are separated by new lines
         input.send_keys("housecode3")
-        button = house_codes_section.find_element_by_css_selector('input[type="submit"]')
+        button = section.find_element_by_css_selector('input[type="submit"]')
         button.click()
         # assert housecode1, housecode2 and housecode3 are in the json response
+        self.assertIn('"status": 200', self.browser.page_source)
+        self.assertIn('"content": ["housecode2", "housecode3"]', self.browser.page_source) # note household1 has been overwritten
 
         # TODO: test for valid input returns relevant errors
-
+        self.fail("finish tests")

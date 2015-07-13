@@ -26,6 +26,23 @@ class ApiHouseCodesTest(TestCase):
         # wrap the client's post and get method to validate the response format
         self.client.post = self.response_wrapper(self.client.post)
         self.client.get = self.response_wrapper(self.client.get)
+
+    def test_POST_saves_a_house_code(self):
+        response = self.client.post("/api/house-codes", data={"house-codes": "housecode1"})
+        self.assertEqual(HouseCode.objects.count(), 1)
+        house_code = HouseCode.objects.first()
+        self.assertEqual(house_code.code, "housecode1")
+
+    def test_POST_can_save_multiple_house_codes(self):
+        response = self.client.post("/api/house-codes", data={"house-codes": "housecode1\r\nhousecode2\r\nhousecode3"}) 
+        self.assertEqual(HouseCode.objects.count(), 3)
+        iter = HouseCode.objects.iterator()
+        housecode1 = iter.next()
+        housecode2 = iter.next()
+        housecode3 = iter.next()
+        self.assertEqual(housecode1.code, "housecode1")
+        self.assertEqual(housecode2.code, "housecode2")
+        self.assertEqual(housecode3.code, "housecode3")
     
     def test_house_codes_url(self):
         found = resolve('/api/house-codes')

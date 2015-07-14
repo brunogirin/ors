@@ -5,6 +5,8 @@ from django.core.exceptions import ValidationError
 from ors.models import HouseCode
 # Create your views here.
 
+INVALID_INPUT_STATUS = 300
+
 def api_documentation(request):
     return render(request, 'api/api_documentation.html', {'list': []})
 

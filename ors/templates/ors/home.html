@@ -19,5 +19,17 @@
 	<input type="submit" value="Submit" />
       </form>
     </section>
+
+    <section id="id-valve-section">
+      <h2>POST /api/valve/house-code</h2>
+      <form action="/api/valve/house-code" method="POST"> {% csrf_token %}
+	<table>
+	  {{ valve_form }}
+	  <tr><td></td><td>
+	    <input type="submit" value="Submit" />
+	  </td></tr>
+	</table>
+      </form>
+    </section>
   </body>
 </html>

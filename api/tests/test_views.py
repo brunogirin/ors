@@ -5,6 +5,29 @@ from django.test import TestCase
 from api.views import api_documentation
 from django.core.urlresolvers import resolve
 from ors.models import HouseCode
+from api.forms import ValveForm
+
+class ApiViewTest(TestCase):
+
+    def setUp(self):
+        # wrap the client's post and get method to validate the response format
+        self.client.post = self.response_wrapper(self.client.post)
+        self.client.get = self.response_wrapper(self.client.get)
+
+    def validate_json_object_format(self, response):
+        self.assertEqual(response['Content-Type'], 'application/json')
+        dict_ = json.loads(response.content)
+        self.assertIn('status', dict_)
+        self.assertEqual(type(dict_['status']), int)
+        self.assertIn('content', dict_)
+
+    def response_wrapper(self, func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            response = func(*args, **kwargs)
+            self.validate_json_object_format(response)
+            return response
+        return wrapper
 
 class ApiDocumentationTest(TestCase):
 
@@ -20,12 +43,7 @@ class ApiDocumentationTest(TestCase):
         response = self.client.get('/api/')
         self.assertTrue('list' in response.context)
                               
-class ApiHouseCodesTest(TestCase):
-
-    def setUp(self):
-        # wrap the client's post and get method to validate the response format
-        self.client.post = self.response_wrapper(self.client.post)
-        self.client.get = self.response_wrapper(self.client.get)
+class ApiHouseCodesTest(ApiViewTest):
 
     def test_POST_blank_does_not_save(self):
         self.client.post("/api/house-codes", data={"house-codes": ""})
@@ -75,17 +93,3 @@ class ApiHouseCodesTest(TestCase):
         house_codes = json.loads(response.content)['content']
         self.assertIn('HouseCode', house_codes)
 
-    def validate_json_object_format(self, response):
-        self.assertEqual(response['Content-Type'], 'application/json')
-        dict_ = json.loads(response.content)
-        self.assertIn('status', dict_)
-        self.assertEqual(type(dict_['status']), int)
-        self.assertIn('content', dict_)
-
-    def response_wrapper(self, func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            response = func(*args, **kwargs)
-            self.validate_json_object_format(response)
-            return response
-        return wrapper

@@ -1,6 +1,6 @@
 import json
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.core.exceptions import ValidationError
 from ors.models import HouseCode
 # Create your views here.
@@ -36,3 +36,6 @@ def house_codes(request):
         if len(warnings) >= 1:
             response["warnings"] = warnings
         return HttpResponse(json.dumps(response), content_type="application/json")
+
+def valve_view(request):
+    return HttpResponse(json.dumps({'status': 200, 'content': None}), content_type='application/json')

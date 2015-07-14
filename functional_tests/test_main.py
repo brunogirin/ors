@@ -2,6 +2,7 @@ import json
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from .base import FunctionalTest
+from api.views import INVALID_INPUT_STATUS
 
 class ValveTest(FunctionalTest):
 
@@ -17,8 +18,12 @@ class ValveTest(FunctionalTest):
         return (open_input, min_temp, max_temp, button)
 
     def get_json_response(self):
-        json_response = self.browser.find_element_by_tag_name("pre")
-        json_response = json.loads(json_response)
+        try:
+            json_response = self.browser.find_element_by_tag_name("pre")
+        except Exception as e:
+            e.msg += '. Page Source : \n{}'.format(self.browser.page_source)
+            raise
+        json_response = json.loads(json_response.text)
         return json_response
 
     def test_main(self):
@@ -35,7 +40,7 @@ class ValveTest(FunctionalTest):
         # the user submits the form
         button.click()
         # TODO: Test the response of the form submission, don't know what the response looks like currently
-        self.assertEqual(self.browser.current_url, self.server_url + '/valve/house-code')
+        self.assertEqual(self.browser.current_url, self.server_url + '/api/valve/house-code')
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], 200)
         
@@ -56,6 +61,8 @@ class ValveTest(FunctionalTest):
         self.browser.get(self.server_url)
         (open_input, min_temp, max_temp, button) = self.get_inputs(section)
         open_input.send_keys("-1")
+        min_temp.send_keys("10")
+        max_temp.send_keys("20")
         button.click()
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
@@ -65,6 +72,8 @@ class ValveTest(FunctionalTest):
         self.browser.get(self.server_url)
         (open_input, min_temp, max_temp, button) = self.get_inputs(section)
         open_input.send_keys("101")
+        min_temp.send_keys("10")
+        max_temp.send_keys("20")
         button.click()
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
@@ -74,7 +83,9 @@ class ValveTest(FunctionalTest):
         # min-temp outside range
         self.browser.get(self.server_url)
         (open_input, min_temp_input, max_temp_input, button) = self.get_inputs(section)
+        open_input.send_keys("50")
         min_temp_input.send_keys("6")
+        max_temp_input.send_keys("20")
         button.click()
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
@@ -132,7 +143,7 @@ class ValveTest(FunctionalTest):
         errors = json_response['errors']
         self.assertIn("Invalid input for parameter: max-temp. max-temp (20) must be greater than min-temp (21)", errors)
     
-class MainTest(FunctionalTest):
+class HouseCodeTest(FunctionalTest):
 
     def test_house_codes(self):
         

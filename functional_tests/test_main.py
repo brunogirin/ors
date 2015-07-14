@@ -53,12 +53,13 @@ class ValveTest(FunctionalTest):
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
         errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: open. Received: , expected: 0-100", errors) # invalid open input
-        self.assertIn("Invalid input for parameter: min-temp, Received: , expected: 7-28", errors) # invalid min-temp input
-        self.assertIn("Invalid input for parameter: max-temp, Received: , expected: 7-28", errors) # invalid max-temp input
+        self.assertIn("Invalid input for parameter: open_input. Received: , expected: 0-100", errors) # invalid open input
+        self.assertIn("Invalid input for parameter: min_temp. Received: , expected: 7-28", errors) # invalid min_temp input
+        self.assertIn("Invalid input for parameter: max_temp. Received: , expected: 7-28", errors) # invalid max_temp input
 
         # open outside range
         self.browser.get(self.server_url)
+        section = self.get_section()
         (open_input, min_temp, max_temp, button) = self.get_inputs(section)
         open_input.send_keys("-1")
         min_temp.send_keys("10")
@@ -67,9 +68,10 @@ class ValveTest(FunctionalTest):
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
         errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: open. Received: -1, expected: 0-100", errors) # invalid open input
+        self.assertIn("Invalid input for parameter: open_input. Received: -1, expected: 0-100", errors) # invalid open input
 
         self.browser.get(self.server_url)
+        section = self.get_section()
         (open_input, min_temp, max_temp, button) = self.get_inputs(section)
         open_input.send_keys("101")
         min_temp.send_keys("10")
@@ -78,10 +80,11 @@ class ValveTest(FunctionalTest):
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
         errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: open. Received: 101, expected: 0-100", errors) # invalid open input
+        self.assertIn("Invalid input for parameter: open_input. Received: 101, expected: 0-100", errors) # invalid open input
 
-        # min-temp outside range
+        # min_temp outside range
         self.browser.get(self.server_url)
+        section = self.get_section()
         (open_input, min_temp_input, max_temp_input, button) = self.get_inputs(section)
         open_input.send_keys("50")
         min_temp_input.send_keys("6")
@@ -90,38 +93,42 @@ class ValveTest(FunctionalTest):
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
         errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: min-temp. Received: 6, expected: 7-28", errors) # invalid open input
+        self.assertIn("Invalid input for parameter: min_temp. Received: 6, expected: 7-28", errors) # invalid open input
 
         self.browser.get(self.server_url)
+        section = self.get_section()
         (open_input, min_temp_input, max_temp_input, button) = self.get_inputs(section)
         min_temp_input.send_keys("29")
         button.click()
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
         errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: min-temp. Received: 29, expected: 7-28", errors) # invalid open input
+        self.assertIn("Invalid input for parameter: min_temp. Received: 29, expected: 7-28", errors) # invalid open input
 
-        # max-temp outside range
+        # max_temp outside range
         self.browser.get(self.server_url)
+        section = self.get_section()
         (open_input, min_temp_input, max_temp_input, button) = self.get_inputs(section)
         max_temp_input.send_keys("6")
         button.click()
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
         errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: max-temp. Received: 6, expected: 7-28", errors) # invalid open input
+        self.assertIn("Invalid input for parameter: max_temp. Received: 6, expected: 7-28", errors) # invalid open input
 
         self.browser.get(self.server_url)
+        section = self.get_section()
         (open_input, min_temp_input, max_temp_input, button) = self.get_inputs(section)
         max_temp_input.send_keys("29")
         button.click()
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
         errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: max-temp. Received: 29, expected: 7-28", errors) # invalid open input
+        self.assertIn("Invalid input for parameter: max_temp. Received: 29, expected: 7-28", errors) # invalid open input
 
-        # user puts a max-temp greater or equal to the min temp
+        # user puts a max_temp greater or equal to the min temp
         self.browser.get(self.server_url)
+        section = self.get_section()
         (open_input, min_temp_input, max_temp_input, button) = self.get_inputs(section)
         open_input.send_keys("50")
         min_temp_input.send_keys("20")
@@ -130,9 +137,10 @@ class ValveTest(FunctionalTest):
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
         errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: max-temp. max-temp (20) must be greater than min-temp (20)", errors)
+        self.assertIn("Invalid input for parameter: max_temp. max_temp (20) must be greater than min_temp (20)", errors)
 
         self.browser.get(self.server_url)
+        section = self.get_section()
         (open_input, min_temp_input, max_temp_input, button) = self.get_inputs(section)
         open_input.send_keys("50")
         min_temp_input.send_keys("21")
@@ -141,7 +149,7 @@ class ValveTest(FunctionalTest):
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
         errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: max-temp. max-temp (20) must be greater than min-temp (21)", errors)
+        self.assertIn("Invalid input for parameter: max_temp. max_temp (20) must be greater than min_temp (21)", errors)
     
 class HouseCodeTest(FunctionalTest):
 

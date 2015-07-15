@@ -6,16 +6,26 @@ from api.views import INVALID_INPUT_STATUS
 
 class ValveTest(FunctionalTest):
 
-    def get_section(self):
-        section = self.browser.find_element_by_id("id-valve-section")
-        return section
+    class TestParameterSet(object):
+        __slots__ = ['inputs', 'expected_errors', 'expected_status_code']
+        class InputVals(object):
+            __slots__ = ['open_input', 'min_temp', 'max_temp']
+        def __init__(self, inputs=None, expected_errors=None, expected_status_code=None):
+            self.inputs = inputs if inputs != None else self.InputVals()
+            self.expected_errors = expected_errors
+            self.expected_status_code = expected_status_code
 
-    def get_inputs(self, section):
-        open_input = section.find_element_by_css_selector("input#id-open-input")
-        max_temp = section.find_element_by_css_selector("input#id-max-temp-input")
-        min_temp = section.find_element_by_css_selector("input#id-min-temp-input")
-        button = section.find_element_by_css_selector('input[type="submit"]')
-        return (open_input, min_temp, max_temp, button)
+    def run_input_validation_test(self, parameter_set):
+        self.initialise_page()
+        self.open_input.send_keys(parameter_set.inputs.open_input)
+        self.min_temp.send_keys(parameter_set.inputs.min_temp)
+        self.max_temp.send_keys(parameter_set.inputs.max_temp)
+        self.button.click()
+        json_response = self.get_json_response()
+        self.assertEqual(json_response['status'], parameter_set.expected_status_code)
+        errors = json_response['errors']
+        for error in parameter_set.expected_errors:
+            self.assertIn(error, errors)
 
     def get_json_response(self):
         try:
@@ -26,19 +36,26 @@ class ValveTest(FunctionalTest):
         json_response = json.loads(json_response.text)
         return json_response
 
+    def initialise_page(self):
+        self.browser.get(self.server_url)
+        self.section = self.browser.find_element_by_id("id-valve-section")
+        self.open_input = self.section.find_element_by_css_selector("input#id-open-input")
+        self.max_temp = self.section.find_element_by_css_selector("input#id-max-temp-input")
+        self.min_temp = self.section.find_element_by_css_selector("input#id-min-temp-input")
+        self.button = self.section.find_element_by_css_selector('input[type="submit"]')
+
     def test_main(self):
         
-        # Open site
-        self.browser.get(self.server_url)
-        section = self.get_section()
-        header = section.find_element_by_tag_name("h2")
-        self.assertEqual("POST /api/valve/house-code", header.text)
-        (open_input, min_temp, max_temp, button) = self.get_inputs(section)
-        open_input.send_keys("50")
-        min_temp.send_keys("20")
-        max_temp.send_keys("25")
+        self.initialise_page()
+        h2 = self.section.find_element_by_tag_name("h2")
+        self.assertEqual(h2.text, "POST /api/valve/house-code")
+
+        # user inputs valid input
+        self.open_input.send_keys("50")
+        self.min_temp.send_keys("20")
+        self.max_temp.send_keys("25")
         # the user submits the form
-        button.click()
+        self.button.click()
         # TODO: Test the response of the form submission, don't know what the response looks like currently
         self.assertEqual(self.browser.current_url, self.server_url + '/api/valve/house-code')
         json_response = self.get_json_response()
@@ -46,110 +63,95 @@ class ValveTest(FunctionalTest):
         
         # form validation
         # empty inputs
-        self.browser.get(self.server_url)
-        section = self.get_section()
-        (open_input, min_temp, max_temp, button) = self.get_inputs(section)
-        button.click()
-        json_response = self.get_json_response()
-        self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
-        errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: open_input. Received: , expected: 0-100", errors) # invalid open input
-        self.assertIn("Invalid input for parameter: min_temp. Received: , expected: 7-28", errors) # invalid min_temp input
-        self.assertIn("Invalid input for parameter: max_temp. Received: , expected: 7-28", errors) # invalid max_temp input
+        x = self.TestParameterSet()
+        x.inputs.open_input = ''
+        x.inputs.min_temp = ''
+        x.inputs.max_temp = ''
+        x.expected_errors = ['Invalid input for parameter: open_input. Received: , expected: 0-100']
+        x.expected_errors += ['Invalid input for parameter: min_temp. Received: , expected: 7-28']
+        x.expected_errors += ['Invalid input for parameter: max_temp. Received: , expected: 7-28']
+        x.expected_status_code = INVALID_INPUT_STATUS
+        test_parameter_sets = [x]
 
-        # open outside range
-        self.browser.get(self.server_url)
-        section = self.get_section()
-        (open_input, min_temp, max_temp, button) = self.get_inputs(section)
-        open_input.send_keys("-1")
-        min_temp.send_keys("10")
-        max_temp.send_keys("20")
-        button.click()
-        json_response = self.get_json_response()
-        self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
-        errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: open_input. Received: -1, expected: 0-100", errors) # invalid open input
+        # open outside range - below min
+        x = self.TestParameterSet()
+        x.inputs.open_input = "-1"
+        x.inputs.min_temp = "10"
+        x.inputs.max_temp = "20"
+        x.expected_status_code = INVALID_INPUT_STATUS
+        x.expected_errors = ["Invalid input for parameter: open_input. Received: -1, expected: 0-100"]
+        test_parameter_sets += [x]
+        # open outside range - above max
+        x = self.TestParameterSet()
+        x.inputs.open_input = "101"
+        x.inputs.min_temp = "10"
+        x.inputs.max_temp = "20"
+        x.expected_status_code = INVALID_INPUT_STATUS
+        x.expected_errors = ["Invalid input for parameter: open_input. Received: 101, expected: 0-100"]
+        test_parameter_sets += [x]
 
-        self.browser.get(self.server_url)
-        section = self.get_section()
-        (open_input, min_temp, max_temp, button) = self.get_inputs(section)
-        open_input.send_keys("101")
-        min_temp.send_keys("10")
-        max_temp.send_keys("20")
-        button.click()
-        json_response = self.get_json_response()
-        self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
-        errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: open_input. Received: 101, expected: 0-100", errors) # invalid open input
+        # min_temp outside range - below min
+        x = self.TestParameterSet()
+        x.inputs.open_input = "50"
+        x.inputs.min_temp = "6"
+        x.inputs.max_temp = "20"
+        x.expected_status_code = INVALID_INPUT_STATUS
+        x.expected_errors = ["Invalid input for parameter: min_temp. Received: 6, expected: 7-28"]
+        test_parameter_sets += [x]
+        # min temp outside range - above max
+        x = self.TestParameterSet()
+        x.inputs.open_input = "50"
+        x.inputs.min_temp = "29"
+        x.inputs.max_temp = "20"
+        x.expected_status_code = INVALID_INPUT_STATUS
+        x.expected_errors = ["Invalid input for parameter: min_temp. Received: 29, expected: 7-28"]
+        test_parameter_sets += [x]
 
-        # min_temp outside range
-        self.browser.get(self.server_url)
-        section = self.get_section()
-        (open_input, min_temp_input, max_temp_input, button) = self.get_inputs(section)
-        open_input.send_keys("50")
-        min_temp_input.send_keys("6")
-        max_temp_input.send_keys("20")
-        button.click()
-        json_response = self.get_json_response()
-        self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
-        errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: min_temp. Received: 6, expected: 7-28", errors) # invalid open input
+        # max_temp outside range - below max
+        x = self.TestParameterSet()
+        x.inputs.open_input = "50"
+        x.inputs.min_temp = "10"
+        x.inputs.max_temp = "6"
+        x.expected_status_code = INVALID_INPUT_STATUS
+        x.expected_errors = ["Invalid input for parameter: max_temp. Received: 6, expected: 7-28"]
+        test_parameter_sets += [x]
+        # max temp outside range - above max
+        x = self.TestParameterSet()
+        x.inputs.open_input = "50"
+        x.inputs.min_temp = "10"
+        x.inputs.max_temp = "29"
+        x.expected_status_code = INVALID_INPUT_STATUS
+        x.expected_errors = ["Invalid input for parameter: max_temp. Received: 29, expected: 7-28"]
+        test_parameter_sets += [x]
 
-        self.browser.get(self.server_url)
-        section = self.get_section()
-        (open_input, min_temp_input, max_temp_input, button) = self.get_inputs(section)
-        min_temp_input.send_keys("29")
-        button.click()
-        json_response = self.get_json_response()
-        self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
-        errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: min_temp. Received: 29, expected: 7-28", errors) # invalid open input
-
-        # max_temp outside range
-        self.browser.get(self.server_url)
-        section = self.get_section()
-        (open_input, min_temp_input, max_temp_input, button) = self.get_inputs(section)
-        max_temp_input.send_keys("6")
-        button.click()
-        json_response = self.get_json_response()
-        self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
-        errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: max_temp. Received: 6, expected: 7-28", errors) # invalid open input
-
-        self.browser.get(self.server_url)
-        section = self.get_section()
-        (open_input, min_temp_input, max_temp_input, button) = self.get_inputs(section)
-        max_temp_input.send_keys("29")
-        button.click()
-        json_response = self.get_json_response()
-        self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
-        errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: max_temp. Received: 29, expected: 7-28", errors) # invalid open input
+        # max temp outside range - above max
+        x = self.TestParameterSet()
+        x.inputs.open_input = "50"
+        x.inputs.min_temp = "10"
+        x.inputs.max_temp = "29"
+        x.expected_status_code = INVALID_INPUT_STATUS
+        x.expected_errors = ["Invalid input for parameter: max_temp. Received: 29, expected: 7-28"]
+        test_parameter_sets += [x]
 
         # user puts a max_temp greater or equal to the min temp
-        self.browser.get(self.server_url)
-        section = self.get_section()
-        (open_input, min_temp_input, max_temp_input, button) = self.get_inputs(section)
-        open_input.send_keys("50")
-        min_temp_input.send_keys("20")
-        max_temp_input.send_keys("20")
-        button.click()
-        json_response = self.get_json_response()
-        self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
-        errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: max_temp. max_temp (20) must be greater than min_temp (20)", errors)
+        x = self.TestParameterSet()
+        x.inputs.open_input = "50"
+        x.inputs.min_temp = "20"
+        x.inputs.max_temp = "20"
+        x.expected_status_code = INVALID_INPUT_STATUS
+        x.expected_errors = ["Invalid input for parameter: max_temp. max_temp (20) must be greater than min_temp (20)"]
+        test_parameter_sets += [x]
 
-        self.browser.get(self.server_url)
-        section = self.get_section()
-        (open_input, min_temp_input, max_temp_input, button) = self.get_inputs(section)
-        open_input.send_keys("50")
-        min_temp_input.send_keys("21")
-        max_temp_input.send_keys("20")
-        button.click()
-        json_response = self.get_json_response()
-        self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
-        errors = json_response['errors']
-        self.assertIn("Invalid input for parameter: max_temp. max_temp (20) must be greater than min_temp (21)", errors)
+        x = self.TestParameterSet()
+        x.inputs.open_input = "50"
+        x.inputs.min_temp = "21"
+        x.inputs.max_temp = "20"
+        x.expected_status_code = INVALID_INPUT_STATUS
+        x.expected_errors = ["Invalid input for parameter: max_temp. max_temp (20) must be greater than min_temp (21)"]
+        test_parameter_sets += [x]
+
+        for parameter_set in test_parameter_sets:
+            self.run_input_validation_test(parameter_set)
     
 class HouseCodeTest(FunctionalTest):
 

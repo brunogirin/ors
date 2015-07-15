@@ -4,10 +4,49 @@ from django.http import HttpResponse, JsonResponse
 from django.core.exceptions import ValidationError
 from django.utils.datastructures import MultiValueDictKeyError
 from ors.models import HouseCode
-from api.models import Debug
+from api.models import Debug, VALID_COLOURS, VALID_FLASH, Led
 # Create your views here.
 
 INVALID_INPUT_STATUS = 300
+
+def led_view(request):
+    response = {'status': 200, 'content': None}
+    errors = []
+    if Led.objects.count() == 0:
+        led = Led.objects.create(colour=0, flash=1)
+    else:
+        led = Led.objects.first()
+    
+    # colour
+    try:
+        led.colour = int(request.POST['colour'])
+        if led.colour not in VALID_COLOURS:
+            raise ValueError()
+    except MultiValueDictKeyError:
+        errors.append('Required input parameter: colour')
+        response['status'] = INVALID_INPUT_STATUS
+    except ValueError:
+        errors.append('Invalid input for parameter: colour. Received: {}, expected: {}'.format(request.POST['colour'], VALID_COLOURS))
+        response['status'] = INVALID_INPUT_STATUS
+
+    # flash
+    try:
+        led.flash = int(request.POST['flash'])
+        if led.flash not in VALID_FLASH:
+            raise ValueError()
+    except MultiValueDictKeyError:
+        errors.append('Required input parameter: flash')
+        response['status'] = INVALID_INPUT_STATUS
+    except ValueError:
+        errors.append('Invalid input for parameter: flash. Received: {}, expected: {}'.format(request.POST['flash'], VALID_FLASH))
+        response['status'] = INVALID_INPUT_STATUS
+
+    if len(errors) == 0:
+        led.save()
+    else:
+        response['errors'] = errors
+
+    return JsonResponse(response)
 
 def debug_view(request):
     response = {'status': 200, 'content': None}

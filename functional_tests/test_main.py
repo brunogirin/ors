@@ -2,7 +2,92 @@ import json
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from .base import FunctionalTest
-from api.views import INVALID_INPUT_STATUS
+from api.views import INVALID_INPUT_STATUS, VALID_COLOURS, VALID_FLASH
+
+class LedTest(FunctionalTest):
+    '''
+    colour: colour of the LED
+    flash: how many seconds the LED should flash for
+    '''
+    
+    class PostTestParameterSet(object):
+
+        __slots__ = ['inputs', 'expected_errors', 'expected_status_code', 'expected_content']
+
+        class Inputs(object):
+            __slots__ = ['colour', 'flash']
+
+        def __init__(self, inputs=None, expected_errors=None, expected_status_code=None, expected_content=None):
+            self.inputs = inputs if inputs != None else self.Inputs()
+            self.expected_errors = expected_errors
+            self.expected_status_code = expected_status_code
+            self.expected_content = expected_content
+
+    def run_input_validation_test(self, parameter_set):
+        self.initialise_page()
+        self.colour_input.send_keys(parameter_set.inputs.colour)
+        self.flash_input.send_keys(parameter_set.inputs.flash)
+        self.button.click()
+        json_response = self.get_json_response()
+        self.assertEqual(json_response['status'], parameter_set.expected_status_code)
+        try:
+            errors = json_response['errors']
+        except KeyError:
+            errors = []
+        for error in parameter_set.expected_errors:
+            self.assertIn(error, errors)
+        self.assertEqual(json_response['content'], parameter_set.expected_content)
+
+    def initialise_page(self):
+        self.browser.get(self.server_url)
+        self.section = self.browser.find_element_by_id("id-led-section")
+        self.colour_input = self.section.find_element_by_css_selector("input#id-colour-input")
+        self.flash_input = self.section.find_element_by_css_selector("input#id-flash-input")
+        self.button = self.section.find_element_by_css_selector('input[type="submit"]')
+
+    def test_main(self):
+        self.initialise_page()
+        h2 = self.section.find_element_by_tag_name('h2')
+        self.assertEqual(h2.text, 'POST /api/led/house-code')
+        
+        # user inputs valid input
+        x = self.PostTestParameterSet()
+        x.inputs.colour = '0'
+        x.inputs.flash = '1'
+        x.expected_errors = []
+        x.expected_status_code = 200
+        x.expected_content = None
+        self.run_input_validation_test(x)
+
+        # user inputs empty values
+        x = self.PostTestParameterSet()
+        x.inputs.colour = ''
+        x.inputs.flash = ''
+        x.expected_errors =  ['Invalid input for parameter: colour. Received: , expected: [0, 1, 2, 3]', 
+                              'Invalid input for parameter: flash. Received: , expected: [1, 2, 4, 8, 16]']
+        x.expected_status_code = 300
+        x.expected_content = None
+        self.run_input_validation_test(x)
+
+        # user inputs alphabetic values
+        x = self.PostTestParameterSet()
+        x.inputs.colour = 'a'
+        x.inputs.flash = 'b'
+        x.expected_errors =  ['Invalid input for parameter: colour. Received: a, expected: [0, 1, 2, 3]', 
+                              'Invalid input for parameter: flash. Received: b, expected: [1, 2, 4, 8, 16]']
+        x.expected_status_code = 300
+        x.expected_content = None
+        self.run_input_validation_test(x)
+
+        # user enters values outside of range
+        x = self.PostTestParameterSet()
+        x.inputs.colour = '5'
+        x.inputs.flash = '3'
+        x.expected_errors =  ['Invalid input for parameter: colour. Received: 5, expected: [0, 1, 2, 3]', 
+                              'Invalid input for parameter: flash. Received: 3, expected: [1, 2, 4, 8, 16]']
+        x.expected_status_code = 300
+        x.expected_content = None
+        self.run_input_validation_test(x)
 
 class DebugTest(FunctionalTest):
 

@@ -4,9 +4,31 @@ from django.http import HttpResponse, JsonResponse
 from django.core.exceptions import ValidationError
 from django.utils.datastructures import MultiValueDictKeyError
 from ors.models import HouseCode
+from api.models import Debug
 # Create your views here.
 
 INVALID_INPUT_STATUS = 300
+
+def debug_view(request):
+    response = {'status': 200, 'content': None}
+    debug = Debug.objects.first()
+    if debug == None:    
+        debug = Debug.objects.create(state="off")
+    if request.method == "POST":
+        try:
+            state = request.POST['state']
+            if state not in ['on', 'off']:
+                response['errors'] = ['Invalid input for parameter: state. Received: {}, expected: on/off'.format(state)]
+                response['status'] = INVALID_INPUT_STATUS
+            else:
+                debug.state = state
+                debug.save()
+        except MultiValueDictKeyError:
+            response['errors'] = ['Required input parameter: state']
+            response['status'] = INVALID_INPUT_STATUS
+    else:
+        response['content'] = debug.state
+    return JsonResponse(response)
 
 def api_documentation(request):
     return render(request, 'api/api_documentation.html', {'list': []})

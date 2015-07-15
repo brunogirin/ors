@@ -6,7 +6,7 @@ from api.views import api_documentation, INVALID_INPUT_STATUS
 from django.core.urlresolvers import resolve
 from ors.models import HouseCode
 from api.forms import ValveForm
-
+from api.models import Debug
 
 class ApiViewTest(TestCase):
 
@@ -29,6 +29,63 @@ class ApiViewTest(TestCase):
             self.validate_json_object_format(response)
             return response
         return wrapper
+
+class ApiDebugTest(ApiViewTest):
+
+    def test_api_url_resolves(self):
+        found = resolve('/api/debug')
+        self.assertEqual(found.func, api.views.debug_view)
+    
+    def test_missing_arguments_returns_error(self):
+        response = self.client.post('/api/debug')
+        response = json.loads(response.content)
+        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
+        self.assertEqual(response['errors'], ['Required input parameter: state'])
+
+    def test_invalid_arguments_returns_error(self):
+        response = self.client.post('/api/debug', data={'state': 'ON'})
+        response = json.loads(response.content)
+        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
+        self.assertEqual(response['errors'], ['Invalid input for parameter: state. Received: ON, expected: on/off'])
+
+    def test_post_state_on_turns_debug_on(self):
+        self.client.post('/api/debug', data={'state': 'on'})
+        self.assertEqual(Debug.objects.first().state, 'on')
+
+    def test_post_state_off_turns_debug_off(self):
+        self.client.post('/api/debug', data={'state': 'off'})
+        self.assertEqual(Debug.objects.first().state, 'off')
+
+    def test_changing_state_does_not_add_more_debug_objects(self):
+        self.client.post('/api/debug', data={'state': 'on'})
+        self.client.post('/api/debug', data={'state': 'off'})
+        self.assertEqual(Debug.objects.count(), 1)
+
+    def test_changing_state(self):
+        self.client.post('/api/debug', data={'state': 'on'})
+        self.assertEqual(Debug.objects.first().state, 'on')
+        self.client.post('/api/debug', data={'state': 'off'})
+        self.assertEqual(Debug.objects.first().state, 'off')
+
+    def test_get_returns_default(self):
+        response = self.client.get('/api/debug')
+        response = json.loads(response.content)
+        self.assertEqual(response['status'], 200)
+        self.assertEqual(response['content'], 'off')
+
+    def test_get_on(self):
+        Debug.objects.create(state="on")
+        response = self.client.get('/api/debug')
+        response = json.loads(response.content)
+        self.assertEqual(response['status'], 200)
+        self.assertEqual(response['content'], 'on')
+
+    def test_get_off(self):
+        Debug.objects.create(state="off")
+        response = self.client.get('/api/debug')
+        response = json.loads(response.content)
+        self.assertEqual(response['status'], 200)
+        self.assertEqual(response['content'], 'off')
 
 class ApiValveTest(ApiViewTest):
 

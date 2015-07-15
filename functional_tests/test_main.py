@@ -4,6 +4,129 @@ from selenium.webdriver.common.keys import Keys
 from .base import FunctionalTest
 from api.views import INVALID_INPUT_STATUS
 
+class DebugTest(FunctionalTest):
+
+    class PostTestParameterSet(object):
+
+         __slots__ = ['inputs', 'expected_errors', 'expected_status_code', 'expected_content']
+         class Inputs(object):
+             __slots__ = ['state_input']
+         def __init__(self, inputs=None, expected_errors=None, expected_status_code=None, expected_content=None):
+             self.inputs = inputs if inputs != None else self.Inputs()
+             self.expected_errors = expected_errors
+             self.expected_status_code = expected_status_code
+             self.expected_content = expected_content
+
+    def run_input_validation_test(self, parameter_set):
+         self.initialise_page()
+         self.state_input.send_keys(parameter_set.inputs.state_input)
+         self.post_button.click()
+         json_response = self.get_json_response()
+         self.assertEqual(json_response['status'], parameter_set.expected_status_code)
+         try:
+             errors = json_response['errors']
+         except KeyError:
+             errors = []
+         for error in parameter_set.expected_errors:
+             self.assertIn(error, errors)
+         self.assertEqual(json_response['content'], parameter_set.expected_content)
+
+    def initialise_page(self):
+        self.browser.get(self.server_url)
+        self.post_section = self.browser.find_element_by_id("id-debug-post-section")
+        self.state_input = self.post_section.find_element_by_css_selector("input#id-state-input")
+        self.post_button = self.post_section.find_element_by_css_selector('input[type="submit"]')
+        self.get_section = self.browser.find_element_by_id('id-debug-get-section')
+        self.get_button = self.get_section.find_element_by_css_selector('input[type="submit"]')
+
+    def test_main(self):
+        self.initialise_page()
+        h2 = self.post_section.find_element_by_tag_name('h2')
+        self.assertEqual(h2.text, 'POST /api/debug')
+        
+        # user inputs valid input
+        x = self.PostTestParameterSet()
+        x.inputs.state_input = 'on'
+        x.expected_errors = []
+        x.expected_status_code = 200
+        x.expected_content = None
+        self.run_input_validation_test(x)
+
+        # user checks input with /api/debug GET
+        self.browser.get(self.server_url + '/api/debug')
+        json_response = self.get_json_response()
+        self.assertEqual(json_response['status'], 200)
+        self.assertEqual(json_response['content'], 'on')
+
+        # user turns off debugging
+        x = self.PostTestParameterSet()
+        x.inputs.state_input = 'off'
+        x.expected_errors = []
+        x.expected_status_code = 200
+        x.expected_content = None
+        self.run_input_validation_test(x)
+        
+        # user checks input with /api/debug GET
+        self.browser.get(self.server_url + '/api/debug')
+        json_response = self.get_json_response()
+        self.assertEqual(json_response['status'], 200)
+        self.assertEqual(json_response['content'], 'off')
+
+        # user enters empty parameter
+        x = self.PostTestParameterSet()
+        x.inputs.state_input = ''
+        x.expected_errors = ['Invalid input for parameter: state. Received: , expected: on/off']
+        x.expected_status_code = INVALID_INPUT_STATUS
+        x.expected_content = None
+        self.run_input_validation_test(x)
+
+        # user checks input with /api/debug GET
+        self.browser.get(self.server_url + '/api/debug')
+        json_response = self.get_json_response()
+        self.assertEqual(json_response['status'], 200)
+        self.assertEqual(json_response['content'], 'off')
+
+        # user enters invalid parameter
+        x = self.PostTestParameterSet()
+        x.inputs.state_input = 'ON'
+        x.expected_errors = ['Invalid input for parameter: state. Received: ON, expected: on/off']
+        x.expected_status_code = INVALID_INPUT_STATUS
+        x.expected_content = None
+        self.run_input_validation_test(x)
+
+#         self.assertEqual(self.browser.current_url, self.server_url + '/api/valve/house-code')
+#         json_response = self.get_json_response()
+#         self.assertEqual(json_response['status'], 200)
+        
+#         # form validation
+#         # empty inputs
+#         x = self.TestParameterSet()
+#         x.inputs.open_input = ''
+#         x.inputs.min_temp = ''
+#         x.inputs.max_temp = ''
+#         x.expected_errors = ['Invalid input for parameter: open_input. Received: , expected: 0-100']
+#         x.expected_errors += ['Invalid input for parameter: min_temp. Received: , expected: 7-28']
+#         x.expected_errors += ['Invalid input for parameter: max_temp. Received: , expected: 7-28']
+#         x.expected_status_code = INVALID_INPUT_STATUS
+#         test_parameter_sets = [x]
+
+#         # open outside range - below min
+#         x = self.TestParameterSet()
+#         x.inputs.open_input = "-1"
+#         x.inputs.min_temp = "10"
+#         x.inputs.max_temp = "20"
+#         x.expected_status_code = INVALID_INPUT_STATUS
+#         x.expected_errors = ["Invalid input for parameter: open_input. Received: -1, expected: 0-100"]
+#         test_parameter_sets += [x]
+#         # open outside range - above max
+#         x = self.TestParameterSet()
+#         x.inputs.open_input = "101"
+#         x.inputs.min_temp = "10"
+#         x.inputs.max_temp = "20"
+#         x.expected_status_code = INVALID_INPUT_STATUS
+#         x.expected_errors = ["Invalid input for parameter: open_input. Received: 101, expected: 0-100"]
+#         test_parameter_sets += [x]
+
 class ValveTest(FunctionalTest):
 
     class TestParameterSet(object):
@@ -26,15 +149,6 @@ class ValveTest(FunctionalTest):
         errors = json_response['errors']
         for error in parameter_set.expected_errors:
             self.assertIn(error, errors)
-
-    def get_json_response(self):
-        try:
-            json_response = self.browser.find_element_by_tag_name("pre")
-        except Exception as e:
-            e.msg += '. Page Source : \n{}'.format(self.browser.page_source)
-            raise
-        json_response = json.loads(json_response.text)
-        return json_response
 
     def initialise_page(self):
         self.browser.get(self.server_url)

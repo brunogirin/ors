@@ -1,3 +1,4 @@
+import json
 import sys
 from django.test import LiveServerTestCase, TestCase
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
@@ -5,6 +6,15 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 
 class FunctionalTest(StaticLiveServerTestCase):
+
+    def get_json_response(self):
+        try:
+            json_response = self.browser.find_element_by_tag_name("pre")
+        except Exception as e:
+            e.msg += '. Page Source : \n{}'.format(self.browser.page_source)
+            raise
+        json_response = json.loads(json_response.text)
+        return json_response
 
     def wait_for_element_with_id(self, element_id):
         WebDriverWait(self.browser, timeout=30).until(

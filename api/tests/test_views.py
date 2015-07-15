@@ -30,6 +30,18 @@ class ApiViewTest(TestCase):
             return response
         return wrapper
 
+class ApiStatusTest(ApiViewTest):
+    
+    def test_api_url_resolves(self):
+        found = resolve('/api/status/house-code')
+        self.assertEqual(found.func, api.views.status_view)
+
+    # TODO: Need to know what the model should be
+    def test_main(self):
+        response = self.client.get('/api/status/house-code')
+        response = json.loads(response.content)
+        self.assertEqual(response, {'status': 200, 'content': {'relative-humidity': 0, 'temperature-opentrv': 0, 'temperature-ds18b20': 0, 'window': 0, 'switch': 0, 'last-updated-all': 0, 'last-updated-temperature': 0, 'led': 0, 'synchronising': 0, 'ambient-light': 0, 'house-code': 0}})
+
 class ApiLedTest(ApiViewTest):
     
     def test_api_url_resolves(self):
@@ -156,8 +168,8 @@ class ApiValveTest(ApiViewTest):
         found = resolve('/api/valve/house-code')
         self.assertEqual(found.func, api.views.valve_view)
 
-#     def test_main(self): # TODO: Need to know what the response should look like
-#         response = self.client.post("/api/valve/house-code")
+        #     def test_main(self): # TODO: Need to know what the response should look like
+        #         response = self.client.post("/api/valve/house-code")
 
     def test_open_input(self):
         # not provided

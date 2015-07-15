@@ -4,6 +4,40 @@ from selenium.webdriver.common.keys import Keys
 from .base import FunctionalTest
 from api.views import INVALID_INPUT_STATUS, VALID_COLOURS, VALID_FLASH
 
+class StatusTest(FunctionalTest):
+    '''
+    relative-humidity
+    temperature-opentrv
+    temperature-ds18b20
+    window
+    switch
+    last-updated-all
+    last-updated-temperature
+    led
+    synchronising
+    ambient-light
+    house-code
+    '''
+
+    def initialise_page(self):
+        self.browser.get(self.server_url)
+        self.section = self.browser.find_element_by_id("id-status-section")
+        self.button = self.section.find_element_by_css_selector('input[type="submit"]')
+
+    def test_main(self):
+        self.initialise_page()
+        h2 = self.section.find_element_by_tag_name('h2')
+        self.assertEqual(h2.text, 'POST /api/status/house-code')
+
+        self.button.click()
+        self.assertEqual(self.browser.current_url, self.server_url + '/api/status/house-code')
+        json_response = self.get_json_response()
+        self.assertEqual(json_response['status'], 200)
+        
+        # TODO: Finish this test
+        expected_content = {'status': 200, 'content': {'relative-humidity': 0, 'temperature-opentrv': 0, 'temperature-ds18b20': 0, 'window': 0, 'switch': 0, 'last-updated-all': 0, 'last-updated-temperature': 0, 'led': 0, 'synchronising': 0, 'ambient-light': 0, 'house-code': 0}}
+        self.assertEqual(json_response, expected_content)
+
 class LedTest(FunctionalTest):
     '''
     colour: colour of the LED
@@ -58,6 +92,8 @@ class LedTest(FunctionalTest):
         x.expected_status_code = 200
         x.expected_content = None
         self.run_input_validation_test(x)
+
+        self.assertEqual(self.browser.current_url, self.server_url + '/api/led/house-code')
 
         # user inputs empty values
         x = self.PostTestParameterSet()
@@ -137,6 +173,8 @@ class DebugTest(FunctionalTest):
         x.expected_content = None
         self.run_input_validation_test(x)
 
+        self.assertEqual(self.browser.current_url, self.server_url + '/api/debug')
+
         # user checks input with /api/debug GET
         self.browser.get(self.server_url + '/api/debug')
         json_response = self.get_json_response()
@@ -178,39 +216,6 @@ class DebugTest(FunctionalTest):
         x.expected_status_code = INVALID_INPUT_STATUS
         x.expected_content = None
         self.run_input_validation_test(x)
-
-#         self.assertEqual(self.browser.current_url, self.server_url + '/api/valve/house-code')
-#         json_response = self.get_json_response()
-#         self.assertEqual(json_response['status'], 200)
-        
-#         # form validation
-#         # empty inputs
-#         x = self.TestParameterSet()
-#         x.inputs.open_input = ''
-#         x.inputs.min_temp = ''
-#         x.inputs.max_temp = ''
-#         x.expected_errors = ['Invalid input for parameter: open_input. Received: , expected: 0-100']
-#         x.expected_errors += ['Invalid input for parameter: min_temp. Received: , expected: 7-28']
-#         x.expected_errors += ['Invalid input for parameter: max_temp. Received: , expected: 7-28']
-#         x.expected_status_code = INVALID_INPUT_STATUS
-#         test_parameter_sets = [x]
-
-#         # open outside range - below min
-#         x = self.TestParameterSet()
-#         x.inputs.open_input = "-1"
-#         x.inputs.min_temp = "10"
-#         x.inputs.max_temp = "20"
-#         x.expected_status_code = INVALID_INPUT_STATUS
-#         x.expected_errors = ["Invalid input for parameter: open_input. Received: -1, expected: 0-100"]
-#         test_parameter_sets += [x]
-#         # open outside range - above max
-#         x = self.TestParameterSet()
-#         x.inputs.open_input = "101"
-#         x.inputs.min_temp = "10"
-#         x.inputs.max_temp = "20"
-#         x.expected_status_code = INVALID_INPUT_STATUS
-#         x.expected_errors = ["Invalid input for parameter: open_input. Received: 101, expected: 0-100"]
-#         test_parameter_sets += [x]
 
 class ValveTest(FunctionalTest):
 
@@ -255,8 +260,8 @@ class ValveTest(FunctionalTest):
         self.max_temp.send_keys("25")
         # the user submits the form
         self.button.click()
-        # TODO: Test the response of the form submission, don't know what the response looks like currently
         self.assertEqual(self.browser.current_url, self.server_url + '/api/valve/house-code')
+        # TODO: Test the response of the form submission, don't know what the response looks like currently
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], 200)
         

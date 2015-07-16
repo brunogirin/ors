@@ -21,4 +21,5 @@ urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^api/', include('api.urls')),
     url(r'^valve/house-code$', 'api.views.valve_view_redirect', name='valve_view_redirect'),
+    url(r'^led/house-code$', 'ors.views.led_view', name='ors_led_view'),
 ]

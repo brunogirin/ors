@@ -50,59 +50,65 @@ class ApiLedTest(ApiViewTest):
 
     # TODO: Need to know that the response looks like to test it
     def test_valid_arguments(self):
-        response = self.client.post('/api/led/house-code', data={'colour': '0', 'flash': '1'})
+        HouseCode.objects.create(code='FA-32')
+        response = self.client.post('/api/led/FA-32', data={'colour': '0', 'flash': '1'})
         response = json.loads(response.content)
         self.assertEqual(response['status'], 200)
         with self.assertRaises(KeyError):
             response['errors']
 
     def test_missing_arguments(self):
-        response = self.client.post('/api/led/house-code')
+        HouseCode.objects.create(code='FA-32')
+        response = self.client.post('/api/led/FA-32')
         response = json.loads(response.content)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
         self.assertEqual(response['errors'], ['Required input parameter: colour', 'Required input parameter: flash'])
 
     def test_invalid_colour_argument(self):
+        HouseCode.objects.create(code='FA-32')
         # non numeric
-        response = self.client.post('/api/led/house-code', data={'colour': 'a', 'flash': '1'})
+        response = self.client.post('/api/led/FA-32', data={'colour': 'a', 'flash': '1'})
         response = json.loads(response.content)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
         self.assertEqual(response['errors'], ['Invalid input for parameter: colour. Received: a, expected: {}'.format(VALID_COLOURS)])
         # below min
-        response = self.client.post('/api/led/house-code', data={'colour': '-1', 'flash': '1'})
+        response = self.client.post('/api/led/FA-32', data={'colour': '-1', 'flash': '1'})
         response = json.loads(response.content)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
         self.assertEqual(response['errors'], ['Invalid input for parameter: colour. Received: -1, expected: {}'.format(VALID_COLOURS)])
         # above max
-        response = self.client.post('/api/led/house-code', data={'colour': '4', 'flash': '1'})
+        response = self.client.post('/api/led/FA-32', data={'colour': '4', 'flash': '1'})
         response = json.loads(response.content)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
         self.assertEqual(response['errors'], ['Invalid input for parameter: colour. Received: 4, expected: {}'.format(VALID_COLOURS)])
 
     def test_invalid_flash_argument(self):
+        HouseCode.objects.create(code='FA-32')
         # non numeric
-        response = self.client.post('/api/led/house-code', data={'colour': '0', 'flash': 'a'})
+        response = self.client.post('/api/led/FA-32', data={'colour': '0', 'flash': 'a'})
         response = json.loads(response.content)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
         self.assertEqual(response['errors'], ['Invalid input for parameter: flash. Received: a, expected: {}'.format(VALID_FLASH)])
         # not matched
-        response = self.client.post('/api/led/house-code', data={'colour': '0', 'flash': '20'})
+        response = self.client.post('/api/led/FA-32', data={'colour': '0', 'flash': '20'})
         response = json.loads(response.content)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
         self.assertEqual(response['errors'], ['Invalid input for parameter: flash. Received: 20, expected: {}'.format(VALID_FLASH)])
 
     def test_setting_attributes(self):
+        HouseCode.objects.create(code='FA-32')
         Led.objects.create(colour=0, flash=1)
-        response = self.client.post('/api/led/house-code', data={'colour': '1', 'flash': '2'})
+        response = self.client.post('/api/led/FA-32', data={'colour': '1', 'flash': '2'})
         response = json.loads(response.content)
         self.assertEqual(response['status'], 200)
         self.assertEqual(Led.objects.first().colour, 1) # colour
         self.assertEqual(Led.objects.first().flash, 2) # flash
 
     def test_changing_state_does_not_add_more_debug_objects(self):
+        HouseCode.objects.create(code='FA-32')
         Led.objects.create(colour=0, flash=1)
-        self.client.post('/api/led/house-code', data={'colour': '1', 'flash': '2'})
-        self.client.post('/api/led/house-code', data={'colour': '3', 'flash': '4'})
+        self.client.post('/api/led/FA-32', data={'colour': '1', 'flash': '2'})
+        self.client.post('/api/led/FA-32', data={'colour': '3', 'flash': '4'})
         self.assertEqual(Led.objects.count(), 1)
 
 class ApiDebugTest(ApiViewTest):

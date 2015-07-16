@@ -52,9 +52,10 @@
     </section>
 
     <section id="id-led-section">
-      <h2>POST /api/led/house-code</h2>
-      <form action="/api/led/house-code" method="POST"> {% csrf_token %}
+      <h2>POST /api/led/<code>&lthouse-code&gt</code></h2>
+      <form action="/led/house-code" method="POST"> {% csrf_token %}
 	<table>
+	  <tr><td><label for="id-house-code-input">House Code:</label></td><td><input id="id-house-code-input" type="text" name="house-code" /></td></tr>
 	  <tr><td><label for="id-colour-input">Colour:</label></td><td><input id="id-colour-input" type="text"  name="colour" /></td></tr>
 	  <tr><td><label for="id-flash-input">Flash:</label></td><td><input id="id-flash-input" type="text"  name="flash" /></td></tr>
 	  <tr><td></td><td><input type="submit" value="Submit" /></td></tr>

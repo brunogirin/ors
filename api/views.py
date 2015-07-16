@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.core.exceptions import ValidationError
 from django.utils.datastructures import MultiValueDictKeyError
-from ors.models import HouseCode
+from api.models import HouseCode
 from api.models import Debug, VALID_COLOURS, VALID_FLASH, Led
 # Create your views here.
 

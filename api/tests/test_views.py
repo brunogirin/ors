@@ -4,7 +4,7 @@ import api.views
 from django.test import TestCase
 from api.views import api_documentation, INVALID_INPUT_STATUS, VALID_COLOURS, VALID_FLASH
 from django.core.urlresolvers import resolve
-from ors.models import HouseCode
+from api.models import HouseCode
 from api.forms import ValveForm
 from api.models import Debug, Led
 

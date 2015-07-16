@@ -302,6 +302,12 @@ class ApiDocumentationTest(TestCase):
                               
 class ApiHouseCodesTest(ApiViewTest):
 
+    def test_invalid_format(self):
+        response = self.client.post("/api/house-codes", data={"house-codes": "WX-YZ"})
+        response = json.loads(response.content)
+        self.assertEqual(response['errors'], ["Invalid house-code. Recieved: WX-YZ, expected XX-XX where XX are uppercase hex numbers"])
+        self.assertEqual(response['content'], [])
+
     def test_POST_blank_does_not_save(self):
         self.client.post("/api/house-codes", data={"house-codes": ""})
         self.assertEqual(HouseCode.objects.count(), 0)
@@ -312,33 +318,33 @@ class ApiHouseCodesTest(ApiViewTest):
         self.assertEqual(response["warnings"], ["ignored empty house code(s)"])
 
     def test_POST_saves_a_house_code(self):
-        response = self.client.post("/api/house-codes", data={"house-codes": "housecode1"})
+        response = self.client.post("/api/house-codes", data={"house-codes": "FA-32"})
         self.assertEqual(HouseCode.objects.count(), 1)
         house_code = HouseCode.objects.first()
-        self.assertEqual(house_code.code, "housecode1")
+        self.assertEqual(house_code.code, "FA-32")
 
     def test_POST_can_save_multiple_house_codes(self):
-        response = self.client.post("/api/house-codes", data={"house-codes": " housecode1, housecode2,housecode3"}) 
+        response = self.client.post("/api/house-codes", data={"house-codes": " FA-32, E2-E1,45-40"}) 
         self.assertEqual(HouseCode.objects.count(), 3)
         iter = HouseCode.objects.iterator()
         housecode1 = iter.next()
         housecode2 = iter.next()
         housecode3 = iter.next()
-        self.assertEqual(housecode1.code, "housecode1")
-        self.assertEqual(housecode2.code, "housecode2")
-        self.assertEqual(housecode3.code, "housecode3")
+        self.assertEqual(housecode1.code, "FA-32")
+        self.assertEqual(housecode2.code, "E2-E1")
+        self.assertEqual(housecode3.code, "45-40")
 
     def test_POST_overwrites_existing_house_codes(self):
-        response = self.client.post("/api/house-codes", data={"house-codes": "housecode1, housecode2, housecode3"}) 
-        response = self.client.post("/api/house-codes", data={"house-codes": "new_housecode1, new_housecode2, new_housecode3"}) 
+        response = self.client.post("/api/house-codes", data={"house-codes": "FA-32, E2-E1, 45-40"}) 
+        response = self.client.post("/api/house-codes", data={"house-codes": "FA-33, E2-E2, 45-41"}) 
         self.assertEqual(HouseCode.objects.count(), 3)
         iter = HouseCode.objects.iterator()
         housecode1 = iter.next()
         housecode2 = iter.next()
         housecode3 = iter.next()
-        self.assertEqual(housecode1.code, "new_housecode1")
-        self.assertEqual(housecode2.code, "new_housecode2")
-        self.assertEqual(housecode3.code, "new_housecode3")
+        self.assertIsNotNone(HouseCode.objects.get(code="FA-33"))
+        self.assertIsNotNone(HouseCode.objects.get(code="E2-E2"))
+        self.assertIsNotNone(HouseCode.objects.get(code="45-41"))
     
     def test_house_codes_url(self):
         found = resolve('/api/house-codes')
@@ -350,3 +356,9 @@ class ApiHouseCodesTest(ApiViewTest):
         house_codes = json.loads(response.content)['content']
         self.assertIn('HouseCode', house_codes)
 
+    def test_POST_replacing_same_housecode_does_not_raise_error(self):
+        response = self.client.post('/api/house-codes', data={'house-codes': 'FA-32'})
+        response = self.client.post('/api/house-codes', data={'house-codes': 'FA-32, E2-E1'})
+        response = json.loads(response.content)
+        self.assertEqual(response['status'], 200)
+        self.assertEqual(response['content'], ['FA-32', 'E2-E1'])

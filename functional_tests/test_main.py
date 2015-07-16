@@ -379,12 +379,12 @@ class HouseCodeTest(FunctionalTest):
         header = section.find_element_by_tag_name("h2")
         self.assertEqual(header.text, 'POST /api/house-codes')
         # user inputs a house code into an input field
-        input.send_keys("housecode1")
+        input.send_keys("FA-32")
         button.click()
         self.assertTrue(self.browser.current_url.endswith('/api/house-codes'))
         # assert the returned json has status 200
         self.assertIn('"status": 200', self.browser.page_source)
-        self.assertIn('"content": ["housecode1"]', self.browser.page_source)
+        self.assertIn('"content": ["FA-32"]', self.browser.page_source)
 
         # user submits a request to get the house codes
         self.browser.get(self.server_url) # returns to homepage
@@ -392,43 +392,43 @@ class HouseCodeTest(FunctionalTest):
         button = section.find_element_by_css_selector('input[type="submit"]')
         button.click()
         # assert the returned json has housecode1 in it
-        self.assertIn('"content": ["housecode1"]', self.browser.page_source)
+        self.assertIn('"content": ["FA-32"]', self.browser.page_source)
 
         # user tries to post multiply house codes
         self.browser.get(self.server_url)
         (section, input, button) = self.get_post_house_codes_tags()
         self.assertEqual(input.tag_name, 'input')
         self.assertEqual(input.get_attribute('type'), 'text')
-        input.send_keys("housecode2")
+        input.send_keys("E2-E1")
         input.send_keys(", ") # multiple entries are separated by commas lines
-        input.send_keys("housecode3")
+        input.send_keys("45-40")
         button = section.find_element_by_css_selector('input[type="submit"]')
         button.click()
         # assert housecode1, housecode2 and housecode3 are in the json response
         self.assertIn('"status": 200', self.browser.page_source)
-        self.assertIn('"content": ["housecode2", "housecode3"]', self.browser.page_source) # note household1 has been overwritten
+        self.assertIn('"content": ["E2-E1", "45-40"]', self.browser.page_source) # note household1 has been overwritten
 
         # user tries to post multiply house codes - with some additional white space
         self.browser.get(self.server_url)
         (section, input, button) = self.get_post_house_codes_tags()
-        input.send_keys(" housecode2")
+        input.send_keys(" E2-E1")
         input.send_keys(",  ") # multiple entries are separated by commas lines
-        input.send_keys("housecode3")
-        input.send_keys(",housecode4")
+        input.send_keys("45-40")
+        input.send_keys(",3A-01")
         button = section.find_element_by_css_selector('input[type="submit"]')
         button.click()
         # assert housecode1, housecode2 and housecode3 are in the json response
         self.assertIn('"status": 200', self.browser.page_source)
-        self.assertIn('"content": ["housecode2", "housecode3", "housecode4"]', self.browser.page_source) # note household1 has been overwritten
+        self.assertIn('"content": ["E2-E1", "45-40", "3A-01"]', self.browser.page_source) # note household1 has been overwritten
 
         # user passes a list of housecodes with some duplicates
         self.browser.implicitly_wait(1)
         self.browser.get(self.server_url)
         (section, input, button) = self.get_post_house_codes_tags()
-        input.send_keys("housecode1,housecode2,housecode1")
+        input.send_keys("FA-32,E2-E1,FA-32")
         button.click()
-        self.assertIn('"content": ["housecode1", "housecode2"]', self.browser.page_source)
-        self.assertIn('"warnings": ["ignored duplicate: housecode1"]', self.browser.page_source)
+        self.assertIn('"content": ["FA-32", "E2-E1"]', self.browser.page_source)
+        self.assertIn('"warnings": ["ignored duplicate: FA-32"]', self.browser.page_source)
 
         # user passes empty strings as a house_code
         self.browser.get(self.server_url)
@@ -438,8 +438,25 @@ class HouseCodeTest(FunctionalTest):
         self.assertIn('"content": []', self.browser.page_source)
         self.assertIn('"warnings": ["ignored empty house code(s)"]', self.browser.page_source)
 
-        # TODO: test for valid input returns relevant errors
-        # self.fail("finish tests")
+        # user enters an invalid format for the house code
+        self.browser.get(self.server_url)
+        (section, input, button) = self.get_post_house_codes_tags()
+        input.send_keys('WX-YZ')
+        button.click()
+        self.assertIn('"content": []', self.browser.page_source)
+        self.assertIn('"errors": ["Invalid house-code. Recieved: WX-YZ, expected XX-XX where XX are uppercase hex numbers"]', self.browser.page_source)
+
+        # user enters the same house code twice, api should overwrite
+        self.browser.get(self.server_url)
+        (section, input, button) = self.get_post_house_codes_tags()
+        input.send_keys('FA-32')
+        button.click()
+        self.browser.get(self.server_url)
+        (section, input, button) = self.get_post_house_codes_tags()
+        input.send_keys('FA-32')
+        button.click()
+        self.assertIn('"status": 200', self.browser.page_source)
+        self.assertIn('"content": ["FA-32"]', self.browser.page_source)
 
     def get_post_house_codes_tags(self):
         section = self.browser.find_element_by_id("id-post-house-codes-section")

@@ -5,6 +5,8 @@ VALID_FLASH = [1, 2, 4, 8, 16]
 # Create your models here.
 class HouseCode(models.Model):
     code = models.CharField(primary_key=True, max_length=50)
+    def __str__(self):
+        return str(self.code)
 
 class Debug(models.Model):
     state = models.CharField(max_length=3, default="off")

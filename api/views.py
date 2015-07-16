@@ -76,31 +76,69 @@ def api_documentation(request):
     return render(request, 'api/api_documentation.html', {'list': []})
 
 def house_codes(request):
-    house_codes = [house_code.code for house_code in HouseCode.objects.all()]
     if request.method == "GET":
+        house_codes = [house_code.code for house_code in HouseCode.objects.all()]
         return HttpResponse(json.dumps({"content": house_codes, "status": 200}), content_type="application/json")
     else:
-        HouseCode.objects.all().delete()
-        house_codes = [hc.strip() for hc in request.POST['house-codes'].split(',')]
+        house_code_strings = [hc.strip() for hc in request.POST['house-codes'].split(',')]
+        house_codes = []
         warnings = []
-        for house_code in house_codes:
-            house_code = HouseCode(code=house_code)
+        errors = []
+
+        # check for duplicates
+        unique_house_code_strings = []
+        duplicates = []
+        for house_code in house_code_strings:
+            if house_code in unique_house_code_strings:
+                duplicates += [house_code]
+            else:
+                unique_house_code_strings.append(house_code)
+        for duplicate in duplicates:
+            warnings.append('ignored duplicate: {}'.format(duplicate))
+        
+        for house_code_str in unique_house_code_strings:
+            house_code = HouseCode(code=house_code_str)
             try:
                 house_code.full_clean()
-                house_code.save()
+                try:
+                    assert(len(house_code.code) ==  5)
+                    assert(house_code.code[2] == '-')
+                    (hex1, hex2) = house_code.code.split('-')
+                    hex1 = int(hex1, 16)
+                    hex2 = int(hex2, 16)
+                    house_codes += [house_code]
+                except (IndexError, AssertionError, ValueError) as e:
+                    errors.append('Invalid house-code. Recieved: {}, expected XX-XX where XX are uppercase hex numbers'.format(house_code.code))
             except ValidationError as e:
-                if dict(e)['code'] == ['This field cannot be blank.']:
+                if str(e) == "{'code': [u'This field cannot be blank.']}":
                     if 'ignored empty house code(s)' not in warnings:
                         warnings.append('ignored empty house code(s)')
+                elif str(e) == "{'code': [u'House code with this Code already exists.']}":
+                    house_codes += [house_code]
                 else:
-                    warnings.append('ignored duplicate: {}'.format(house_code.code))
-        house_codes = [house_code.code for house_code in HouseCode.objects.all()]
+                    raise(e)
+
+#         # check if any house codes passed validation
+#         if len(house_codes) == 0:
+#             errors.append('No valid house codes found')
+
+        # return error if there are invalid house codes, empty house codes only return a warning
+        if(len(errors)):
+            response = {'status': INVALID_INPUT_STATUS, 'content': [], 'errors': errors}
+            return JsonResponse(response)
+
+        HouseCode.objects.all().delete()
+        for house_code in house_codes:
+            house_code.save()
+
         response = {}
-        response["content"] = house_codes
+        response["content"] = [hc.code for hc in house_codes]
         response["status"] = 200
         if len(warnings) >= 1:
             response["warnings"] = warnings
-        return HttpResponse(json.dumps(response), content_type="application/json")
+
+        return JsonResponse(response)
+
 
 def valve_view(request):
     data = request.POST

@@ -81,7 +81,7 @@ def house_codes(request):
         return HttpResponse(json.dumps({"content": house_codes, "status": 200}), content_type="application/json")
     else:
         HouseCode.objects.all().delete()
-        house_codes = request.POST['house-codes'].split('\r\n')
+        house_codes = [hc.strip() for hc in request.POST['house-codes'].split(',')]
         warnings = []
         for house_code in house_codes:
             house_code = HouseCode(code=house_code)

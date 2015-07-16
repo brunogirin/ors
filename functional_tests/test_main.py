@@ -397,9 +397,10 @@ class HouseCodeTest(FunctionalTest):
         # user tries to post multiply house codes
         self.browser.get(self.server_url)
         (section, input, button) = self.get_post_house_codes_tags()
-        self.assertEqual(input.tag_name, 'textarea')
+        self.assertEqual(input.tag_name, 'input')
+        self.assertEqual(input.get_attribute('type'), 'text')
         input.send_keys("housecode2")
-        input.send_keys("\n") # multiple entries are separated by new lines
+        input.send_keys(", ") # multiple entries are separated by commas lines
         input.send_keys("housecode3")
         button = section.find_element_by_css_selector('input[type="submit"]')
         button.click()
@@ -407,10 +408,24 @@ class HouseCodeTest(FunctionalTest):
         self.assertIn('"status": 200', self.browser.page_source)
         self.assertIn('"content": ["housecode2", "housecode3"]', self.browser.page_source) # note household1 has been overwritten
 
-        # user passes a list of housecodes with some duplicates
+        # user tries to post multiply house codes - with some additional white space
         self.browser.get(self.server_url)
         (section, input, button) = self.get_post_house_codes_tags()
-        input.send_keys("housecode1\nhousecode2\nhousecode1")
+        input.send_keys(" housecode2")
+        input.send_keys(",  ") # multiple entries are separated by commas lines
+        input.send_keys("housecode3")
+        input.send_keys(",housecode4")
+        button = section.find_element_by_css_selector('input[type="submit"]')
+        button.click()
+        # assert housecode1, housecode2 and housecode3 are in the json response
+        self.assertIn('"status": 200', self.browser.page_source)
+        self.assertIn('"content": ["housecode2", "housecode3", "housecode4"]', self.browser.page_source) # note household1 has been overwritten
+
+        # user passes a list of housecodes with some duplicates
+        self.browser.implicitly_wait(1)
+        self.browser.get(self.server_url)
+        (section, input, button) = self.get_post_house_codes_tags()
+        input.send_keys("housecode1,housecode2,housecode1")
         button.click()
         self.assertIn('"content": ["housecode1", "housecode2"]', self.browser.page_source)
         self.assertIn('"warnings": ["ignored duplicate: housecode1"]', self.browser.page_source)
@@ -418,7 +433,7 @@ class HouseCodeTest(FunctionalTest):
         # user passes empty strings as a house_code
         self.browser.get(self.server_url)
         (section, input, button) = self.get_post_house_codes_tags()
-        input.send_keys('\n')
+        input.send_keys('')
         button.click()
         self.assertIn('"content": []', self.browser.page_source)
         self.assertIn('"warnings": ["ignored empty house code(s)"]', self.browser.page_source)
@@ -431,3 +446,4 @@ class HouseCodeTest(FunctionalTest):
         input = section.find_element_by_id("id-house-codes-input")
         button = section.find_element_by_css_selector('input[type="submit"]')
         return (section, input, button)
+

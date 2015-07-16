@@ -318,7 +318,7 @@ class ApiHouseCodesTest(ApiViewTest):
         self.assertEqual(house_code.code, "housecode1")
 
     def test_POST_can_save_multiple_house_codes(self):
-        response = self.client.post("/api/house-codes", data={"house-codes": "housecode1\r\nhousecode2\r\nhousecode3"}) 
+        response = self.client.post("/api/house-codes", data={"house-codes": " housecode1, housecode2,housecode3"}) 
         self.assertEqual(HouseCode.objects.count(), 3)
         iter = HouseCode.objects.iterator()
         housecode1 = iter.next()
@@ -329,8 +329,8 @@ class ApiHouseCodesTest(ApiViewTest):
         self.assertEqual(housecode3.code, "housecode3")
 
     def test_POST_overwrites_existing_house_codes(self):
-        response = self.client.post("/api/house-codes", data={"house-codes": "housecode1\r\nhousecode2\r\nhousecode3"}) 
-        response = self.client.post("/api/house-codes", data={"house-codes": "new_housecode1\r\nnew_housecode2\r\nnew_housecode3"}) 
+        response = self.client.post("/api/house-codes", data={"house-codes": "housecode1, housecode2, housecode3"}) 
+        response = self.client.post("/api/house-codes", data={"house-codes": "new_housecode1, new_housecode2, new_housecode3"}) 
         self.assertEqual(HouseCode.objects.count(), 3)
         iter = HouseCode.objects.iterator()
         housecode1 = iter.next()

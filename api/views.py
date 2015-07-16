@@ -1,10 +1,11 @@
 import json
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.core.exceptions import ValidationError
 from django.utils.datastructures import MultiValueDictKeyError
-from api.models import HouseCode
+from api.models import HouseCode, INVALID_HOUSE_CODE_MSG
 from api.models import Debug, VALID_COLOURS, VALID_FLASH, Led
+
 # Create your views here.
 
 INVALID_INPUT_STATUS = 300
@@ -100,27 +101,12 @@ def house_codes(request):
             house_code = HouseCode(code=house_code_str)
             try:
                 house_code.full_clean()
-                try:
-                    assert(len(house_code.code) ==  5)
-                    assert(house_code.code[2] == '-')
-                    (hex1, hex2) = house_code.code.split('-')
-                    hex1 = int(hex1, 16)
-                    hex2 = int(hex2, 16)
-                    house_codes += [house_code]
-                except (IndexError, AssertionError, ValueError) as e:
-                    errors.append('Invalid house-code. Recieved: {}, expected XX-XX where XX are uppercase hex numbers'.format(house_code.code))
+                house_codes += [house_code]
             except ValidationError as e:
-                if str(e) == "{'code': [u'This field cannot be blank.']}":
-                    if 'ignored empty house code(s)' not in warnings:
-                        warnings.append('ignored empty house code(s)')
-                elif str(e) == "{'code': [u'House code with this Code already exists.']}":
+                if str(e) == "{'code': [u'House code with this Code already exists.']}":
                     house_codes += [house_code]
                 else:
-                    raise(e)
-
-#         # check if any house codes passed validation
-#         if len(house_codes) == 0:
-#             errors.append('No valid house codes found')
+                    errors.extend(e.message_dict['code'])
 
         # return error if there are invalid house codes, empty house codes only return a warning
         if(len(errors)):
@@ -139,12 +125,24 @@ def house_codes(request):
 
         return JsonResponse(response)
 
+def valve_view_redirect(request):
+    house_code = request.POST['house_code']
+    return valve_view(request, house_code)
 
-def valve_view(request):
-    data = request.POST
-    errors = []
+def valve_view(request, house_code):
+
     response = {'status': 200, 'content': None}
+    errors = []
+    data = request.POST
     min_temp = None
+
+    house_code = HouseCode(code=house_code)
+    try:
+        house_code.full_clean()
+    except ValidationError as e:
+        response['status'] = INVALID_INPUT_STATUS
+        response['errors'] = e.message_dict['code']
+        return JsonResponse(response)
 
     try:
         open_input = data['open_input']
@@ -153,10 +151,10 @@ def valve_view(request):
             raise ValueError()
     except ValueError:
         errors.append('Invalid input for parameter: open_input. Received: {}, expected: 0-100'.format(open_input))
-        response['status'] = 300
+        response['status'] = INVALID_INPUT_STATUS
     except MultiValueDictKeyError:
         errors.append('Required input parameter: open_input')
-        response['status'] = 300
+        response['status'] = INVALID_INPUT_STATUS
 
     try:
         min_temp = data['min_temp']
@@ -165,10 +163,10 @@ def valve_view(request):
             raise ValueError()
     except ValueError:
         errors.append('Invalid input for parameter: min_temp. Received: {}, expected: 7-28'.format(min_temp))
-        response['status'] = 300
+        response['status'] = INVALID_INPUT_STATUS
     except MultiValueDictKeyError:
         errors.append('Required input parameter: min_temp')
-        response['status'] = 300
+        response['status'] = INVALID_INPUT_STATUS
     
     try:
         max_temp = data['max_temp']
@@ -177,17 +175,17 @@ def valve_view(request):
             raise ValueError()
     except ValueError:
         errors.append('Invalid input for parameter: max_temp. Received: {}, expected: 7-28'.format(max_temp))
-        response['status'] = 300
+        response['status'] = INVALID_INPUT_STATUS
     except MultiValueDictKeyError:
         errors.append('Required input parameter: max_temp')
-        response['status'] = 300
+        response['status'] = INVALID_INPUT_STATUS
 
     try:
         min_temp = int(data['min_temp'])
         max_temp = int(data['max_temp'])
         if max_temp <= min_temp:
             errors.append("Invalid input for parameter: max_temp. max_temp ({}) must be greater than min_temp ({})".format(max_temp, min_temp))
-            response['status'] = 300
+            response['status'] = INVALID_INPUT_STATUS
     except ValueError:
         pass
     except MultiValueDictKeyError:

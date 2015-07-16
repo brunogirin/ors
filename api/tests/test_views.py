@@ -4,7 +4,7 @@ import api.views
 from django.test import TestCase
 from api.views import api_documentation, INVALID_INPUT_STATUS, VALID_COLOURS, VALID_FLASH
 from django.core.urlresolvers import resolve
-from api.models import HouseCode
+from api.models import HouseCode, INVALID_HOUSE_CODE_MSG
 from api.forms import ValveForm
 from api.models import Debug, Led
 
@@ -165,43 +165,55 @@ class ApiDebugTest(ApiViewTest):
 class ApiValveTest(ApiViewTest):
 
     def test_api_url_resolves_valve(self):
-        found = resolve('/api/valve/house-code')
+        found = resolve('/api/valve/FA-32')
         self.assertEqual(found.func, api.views.valve_view)
 
         #     def test_main(self): # TODO: Need to know what the response should look like
         #         response = self.client.post("/api/valve/house-code")
 
+    def test_house_code_input(self):
+        response = self.client.post('/api/valve/')
+        response = json.loads(response.content)
+        errors = response['errors']
+        self.assertIn(INVALID_HOUSE_CODE_MSG.format(''), errors)
+        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
+        response = self.client.post('/api/valve/HOUSECODE')
+        response = json.loads(response.content)
+        errors = response['errors']
+        self.assertIn(INVALID_HOUSE_CODE_MSG.format('HOUSECODE'), errors)
+        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
+
     def test_open_input(self):
         # not provided
-        response = self.client.post('/api/valve/house-code', data={"min_temp": '7', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={"min_temp": '7', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertEqual(errors, ["Required input parameter: open_input"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # empty
-        response = self.client.post('/api/valve/house-code', data={'open_input': '', "min_temp": '7', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open_input': '', "min_temp": '7', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertEqual(errors, ["Invalid input for parameter: open_input. Received: , expected: 0-100"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # below min
-        response = self.client.post('/api/valve/house-code', data={'open_input': '-1', "min_temp": '7', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open_input': '-1', "min_temp": '7', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertEqual(errors, ["Invalid input for parameter: open_input. Received: -1, expected: 0-100"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # above max
-        response = self.client.post('/api/valve/house-code', data={'open_input': '101', "min_temp": '7', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open_input': '101', "min_temp": '7', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertEqual(errors, ["Invalid input for parameter: open_input. Received: 101, expected: 0-100"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # non int
-        response = self.client.post('/api/valve/house-code', data={'open_input': 'a', "min_temp": '7', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open_input': 'a', "min_temp": '7', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertEqual(errors, ["Invalid input for parameter: open_input. Received: a, expected: 0-100"])
@@ -209,35 +221,35 @@ class ApiValveTest(ApiViewTest):
         
     def test_min_temp_input(self):
         # not provided
-        response = self.client.post('/api/valve/house-code', data={'open_input': '50', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertEqual(errors, ["Required input parameter: min_temp"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # empty
-        response = self.client.post('/api/valve/house-code', data={'open_input': '50', "min_temp": '', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertEqual(errors, ["Invalid input for parameter: min_temp. Received: , expected: 7-28"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # below min
-        response = self.client.post('/api/valve/house-code', data={'open_input': '50', "min_temp": '6', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '6', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertEqual(errors, ["Invalid input for parameter: min_temp. Received: 6, expected: 7-28"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # above max
-        response = self.client.post('/api/valve/house-code', data={'open_input': '50', "min_temp": '29', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '29', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertIn("Invalid input for parameter: min_temp. Received: 29, expected: 7-28", errors)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # non int
-        response = self.client.post('/api/valve/house-code', data={'open_input': '50', "min_temp": 'a', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": 'a', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertEqual(errors, ["Invalid input for parameter: min_temp. Received: a, expected: 7-28"])
@@ -245,42 +257,42 @@ class ApiValveTest(ApiViewTest):
 
     def test_max_temp_input(self):
         # not provided
-        response = self.client.post('/api/valve/house-code', data={"open_input": '50', "min_temp": '7'})
+        response = self.client.post('/api/valve/FA-32', data={"open_input": '50', "min_temp": '7'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertEqual(errors, ["Required input parameter: max_temp"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # empty
-        response = self.client.post('/api/valve/house-code', data={'open_input': '50', "min_temp": '7', 'max_temp': ''})
+        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '7', 'max_temp': ''})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertEqual(errors, ["Invalid input for parameter: max_temp. Received: , expected: 7-28"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # below min
-        response = self.client.post('/api/valve/house-code', data={'open_input': '50', "min_temp": '7', 'max_temp': '6'})
+        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '7', 'max_temp': '6'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertIn("Invalid input for parameter: max_temp. Received: 6, expected: 7-28", errors)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # above max
-        response = self.client.post('/api/valve/house-code', data={'open_input': '50', "min_temp": '7', 'max_temp': '29'})
+        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '7', 'max_temp': '29'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertIn("Invalid input for parameter: max_temp. Received: 29, expected: 7-28", errors)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # non int
-        response = self.client.post('/api/valve/house-code', data={'open_input': '50', "min_temp": '7', 'max_temp': 'a'})
+        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '7', 'max_temp': 'a'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertIn("Invalid input for parameter: max_temp. Received: a, expected: 7-28", errors)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
     def test_max_temp_greater_than_min_temp(self):
-        response = self.client.post('/api/valve/house-code', data={'open_input': '50', 'min_temp': '20', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', 'min_temp': '20', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
         self.assertEqual(errors, ["Invalid input for parameter: max_temp. max_temp (20) must be greater than min_temp (20)"])
@@ -312,10 +324,10 @@ class ApiHouseCodesTest(ApiViewTest):
         self.client.post("/api/house-codes", data={"house-codes": ""})
         self.assertEqual(HouseCode.objects.count(), 0)
 
-    def test_POST_blank_returns_blank_house_code_warning(self):
+    def test_POST_blank_returns_error(self):
         response = json.loads(self.client.post("/api/house-codes", data={"house-codes": ""}).content)
-        self.assertIn("warnings", response)
-        self.assertEqual(response["warnings"], ["ignored empty house code(s)"])
+        self.assertIn("errors", response)
+        self.assertIn("Invalid house-code. Recieved: , expected XX-XX where XX are uppercase hex numbers", response["errors"])
 
     def test_POST_saves_a_house_code(self):
         response = self.client.post("/api/house-codes", data={"house-codes": "FA-32"})
@@ -362,3 +374,5 @@ class ApiHouseCodesTest(ApiViewTest):
         response = json.loads(response.content)
         self.assertEqual(response['status'], 200)
         self.assertEqual(response['content'], ['FA-32', 'E2-E1'])
+
+        

@@ -2,7 +2,7 @@ import json
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from .base import FunctionalTest
-from api.views import INVALID_INPUT_STATUS, VALID_COLOURS, VALID_FLASH
+from api.views import INVALID_INPUT_STATUS, VALID_COLOURS, VALID_FLASH, INVALID_HOUSE_CODE_MSG
 
 class StatusTest(FunctionalTest):
     '''
@@ -222,7 +222,7 @@ class ValveTest(FunctionalTest):
     class TestParameterSet(object):
         __slots__ = ['inputs', 'expected_errors', 'expected_status_code']
         class InputVals(object):
-            __slots__ = ['open_input', 'min_temp', 'max_temp']
+            __slots__ = ['open_input', 'min_temp', 'max_temp', 'house_code']
         def __init__(self, inputs=None, expected_errors=None, expected_status_code=None):
             self.inputs = inputs if inputs != None else self.InputVals()
             self.expected_errors = expected_errors
@@ -230,6 +230,7 @@ class ValveTest(FunctionalTest):
 
     def run_input_validation_test(self, parameter_set):
         self.initialise_page()
+        self.house_code.send_keys(parameter_set.inputs.house_code)
         self.open_input.send_keys(parameter_set.inputs.open_input)
         self.min_temp.send_keys(parameter_set.inputs.min_temp)
         self.max_temp.send_keys(parameter_set.inputs.max_temp)
@@ -243,6 +244,7 @@ class ValveTest(FunctionalTest):
     def initialise_page(self):
         self.browser.get(self.server_url)
         self.section = self.browser.find_element_by_id("id-valve-section")
+        self.house_code = self.section.find_element_by_css_selector("input#id-house-code")
         self.open_input = self.section.find_element_by_css_selector("input#id-open-input")
         self.max_temp = self.section.find_element_by_css_selector("input#id-max-temp-input")
         self.min_temp = self.section.find_element_by_css_selector("input#id-min-temp-input")
@@ -252,13 +254,13 @@ class ValveTest(FunctionalTest):
         
         self.initialise_page()
         h2 = self.section.find_element_by_tag_name("h2")
-        self.assertEqual(h2.text, "POST /api/valve/house-code")
+        self.assertEqual(h2.text, "POST /api/valve/<house-code>")
 
         # user inputs valid input
+        self.house_code.send_keys('FA-32')
         self.open_input.send_keys("50")
         self.min_temp.send_keys("20")
         self.max_temp.send_keys("25")
-        # the user submits the form
         self.button.click()
         self.assertEqual(self.browser.current_url, self.server_url + '/api/valve/house-code')
         # TODO: Test the response of the form submission, don't know what the response looks like currently
@@ -266,8 +268,29 @@ class ValveTest(FunctionalTest):
         self.assertEqual(json_response['status'], 200)
         
         # form validation
+
+        # invalid house-code
+        x = self.TestParameterSet()
+        x.inputs.house_code = ''
+        x.inputs.open_input = '50'
+        x.inputs.min_temp = '10'
+        x.inputs.max_temp = '25'
+        x.expected_errors = [INVALID_HOUSE_CODE_MSG.format('')]
+        x.expected_status_code = INVALID_INPUT_STATUS
+        self.run_input_validation_test(x)
+        x = self.TestParameterSet()
+        x.inputs.house_code = 'HOUSECODE'
+        x.inputs.open_input = '50'
+        x.inputs.min_temp = '10'
+        x.inputs.max_temp = '25'
+        x.expected_errors = [INVALID_HOUSE_CODE_MSG.format('HOUSECODE')]
+        x.expected_status_code = INVALID_INPUT_STATUS
+        self.run_input_validation_test(x)
+
+        test_parameter_sets = []
         # empty inputs
         x = self.TestParameterSet()
+        x.inputs.house_code = 'FA-32'
         x.inputs.open_input = ''
         x.inputs.min_temp = ''
         x.inputs.max_temp = ''
@@ -275,10 +298,11 @@ class ValveTest(FunctionalTest):
         x.expected_errors += ['Invalid input for parameter: min_temp. Received: , expected: 7-28']
         x.expected_errors += ['Invalid input for parameter: max_temp. Received: , expected: 7-28']
         x.expected_status_code = INVALID_INPUT_STATUS
-        test_parameter_sets = [x]
+        test_parameter_sets += [x]
 
         # open outside range - below min
         x = self.TestParameterSet()
+        x.inputs.house_code = 'FA-32'
         x.inputs.open_input = "-1"
         x.inputs.min_temp = "10"
         x.inputs.max_temp = "20"
@@ -287,6 +311,7 @@ class ValveTest(FunctionalTest):
         test_parameter_sets += [x]
         # open outside range - above max
         x = self.TestParameterSet()
+        x.inputs.house_code = 'FA-32'
         x.inputs.open_input = "101"
         x.inputs.min_temp = "10"
         x.inputs.max_temp = "20"
@@ -296,6 +321,7 @@ class ValveTest(FunctionalTest):
 
         # min_temp outside range - below min
         x = self.TestParameterSet()
+        x.inputs.house_code = 'FA-32'
         x.inputs.open_input = "50"
         x.inputs.min_temp = "6"
         x.inputs.max_temp = "20"
@@ -304,6 +330,7 @@ class ValveTest(FunctionalTest):
         test_parameter_sets += [x]
         # min temp outside range - above max
         x = self.TestParameterSet()
+        x.inputs.house_code = 'FA-32'
         x.inputs.open_input = "50"
         x.inputs.min_temp = "29"
         x.inputs.max_temp = "20"
@@ -313,6 +340,7 @@ class ValveTest(FunctionalTest):
 
         # max_temp outside range - below max
         x = self.TestParameterSet()
+        x.inputs.house_code = 'FA-32'
         x.inputs.open_input = "50"
         x.inputs.min_temp = "10"
         x.inputs.max_temp = "6"
@@ -321,6 +349,7 @@ class ValveTest(FunctionalTest):
         test_parameter_sets += [x]
         # max temp outside range - above max
         x = self.TestParameterSet()
+        x.inputs.house_code = 'FA-32'
         x.inputs.open_input = "50"
         x.inputs.min_temp = "10"
         x.inputs.max_temp = "29"
@@ -331,6 +360,7 @@ class ValveTest(FunctionalTest):
         # max temp outside range - above max
         x = self.TestParameterSet()
         x.inputs.open_input = "50"
+        x.inputs.house_code = 'FA-32'
         x.inputs.min_temp = "10"
         x.inputs.max_temp = "29"
         x.expected_status_code = INVALID_INPUT_STATUS
@@ -339,6 +369,7 @@ class ValveTest(FunctionalTest):
 
         # user puts a max_temp greater or equal to the min temp
         x = self.TestParameterSet()
+        x.inputs.house_code = 'FA-32'
         x.inputs.open_input = "50"
         x.inputs.min_temp = "20"
         x.inputs.max_temp = "20"
@@ -347,6 +378,7 @@ class ValveTest(FunctionalTest):
         test_parameter_sets += [x]
 
         x = self.TestParameterSet()
+        x.inputs.house_code = 'FA-32'
         x.inputs.open_input = "50"
         x.inputs.min_temp = "21"
         x.inputs.max_temp = "20"
@@ -436,7 +468,8 @@ class HouseCodeTest(FunctionalTest):
         input.send_keys('')
         button.click()
         self.assertIn('"content": []', self.browser.page_source)
-        self.assertIn('"warnings": ["ignored empty house code(s)"]', self.browser.page_source)
+        response = json.loads(self.browser.find_element_by_tag_name("pre").text)
+        self.assertIn("This field cannot be blank.", response['errors'])
 
         # user enters an invalid format for the house code
         self.browser.get(self.server_url)

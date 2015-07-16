@@ -25,6 +25,6 @@ class EmulatorValveViewTest(TestCase):
 class ValveViewRedirectTest(TestCase):
 
     def test_api_url_resolves_valve(self):
-        found = resolve('/api/valve/house-code')
+        found = resolve('/valve/house-code')
         self.assertEqual(found.func, api.views.valve_view_redirect)
 

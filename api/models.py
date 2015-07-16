@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 VALID_COLOURS = range(4)
 VALID_FLASH = [1, 2, 4, 8, 16]
 INVALID_HOUSE_CODE_MSG = "Invalid house-code. Recieved: {}, expected XX-XX where XX are uppercase hex numbers"
+HOUSE_CODE_NOT_FOUND_MSG = "house-code not found: {}"
 
 # Create your models here.
 class HouseCode(models.Model):

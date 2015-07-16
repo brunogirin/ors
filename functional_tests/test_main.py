@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from .base import FunctionalTest
 from api.views import INVALID_INPUT_STATUS, VALID_COLOURS, VALID_FLASH, INVALID_HOUSE_CODE_MSG
+from api.models import HOUSE_CODE_NOT_FOUND_MSG
 
 class StatusTest(FunctionalTest):
     '''
@@ -251,21 +252,36 @@ class ValveTest(FunctionalTest):
         self.button = self.section.find_element_by_css_selector('input[type="submit"]')
 
     def test_main(self):
-        
+
         self.initialise_page()
         h2 = self.section.find_element_by_tag_name("h2")
         self.assertEqual(h2.text, "POST /api/valve/<house-code>")
 
+        section = self.browser.find_element_by_id("id-post-house-codes-section")
+        input = section.find_element_by_id("id-house-codes-input")
+        input.send_keys("FA-32")
+        button = section.find_element_by_css_selector('input[type="submit"]')
+        button.click()
+
         # user inputs valid input
+        self.initialise_page()
+
         self.house_code.send_keys('FA-32')
         self.open_input.send_keys("50")
         self.min_temp.send_keys("20")
         self.max_temp.send_keys("25")
         self.button.click()
-        self.assertEqual(self.browser.current_url, self.server_url + '/api/valve/house-code')
+        self.assertEqual(self.browser.current_url, self.server_url + '/valve/house-code')
         # TODO: Test the response of the form submission, don't know what the response looks like currently
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], 200)
+
+        # user inputs a house-code that has a valid format but does not exist
+        self.initialise_page()
+        self.house_code.send_keys('FA-11')
+        self.button.click()
+        response = json.loads(self.browser.find_element_by_tag_name("pre").text)
+        self.assertEqual(response['errors'], [HOUSE_CODE_NOT_FOUND_MSG.format('FA-11')])
         
         # form validation
 
@@ -275,7 +291,7 @@ class ValveTest(FunctionalTest):
         x.inputs.open_input = '50'
         x.inputs.min_temp = '10'
         x.inputs.max_temp = '25'
-        x.expected_errors = [INVALID_HOUSE_CODE_MSG.format('')]
+        x.expected_errors = [HOUSE_CODE_NOT_FOUND_MSG.format('')]
         x.expected_status_code = INVALID_INPUT_STATUS
         self.run_input_validation_test(x)
         x = self.TestParameterSet()
@@ -283,7 +299,7 @@ class ValveTest(FunctionalTest):
         x.inputs.open_input = '50'
         x.inputs.min_temp = '10'
         x.inputs.max_temp = '25'
-        x.expected_errors = [INVALID_HOUSE_CODE_MSG.format('HOUSECODE')]
+        x.expected_errors = [HOUSE_CODE_NOT_FOUND_MSG.format('HOUSECODE')]
         x.expected_status_code = INVALID_INPUT_STATUS
         self.run_input_validation_test(x)
 

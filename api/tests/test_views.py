@@ -4,7 +4,7 @@ import api.views
 from django.test import TestCase
 from api.views import api_documentation, INVALID_INPUT_STATUS, VALID_COLOURS, VALID_FLASH
 from django.core.urlresolvers import resolve
-from api.models import HouseCode, INVALID_HOUSE_CODE_MSG
+from api.models import HouseCode, INVALID_HOUSE_CODE_MSG, HOUSE_CODE_NOT_FOUND_MSG
 from api.forms import ValveForm
 from api.models import Debug, Led
 
@@ -168,23 +168,27 @@ class ApiValveTest(ApiViewTest):
         found = resolve('/api/valve/FA-32')
         self.assertEqual(found.func, api.views.valve_view)
 
-        #     def test_main(self): # TODO: Need to know what the response should look like
-        #         response = self.client.post("/api/valve/house-code")
-
     def test_house_code_input(self):
         response = self.client.post('/api/valve/')
         response = json.loads(response.content)
         errors = response['errors']
-        self.assertIn(INVALID_HOUSE_CODE_MSG.format(''), errors)
+        self.assertIn(HOUSE_CODE_NOT_FOUND_MSG.format(''), errors)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
         response = self.client.post('/api/valve/HOUSECODE')
         response = json.loads(response.content)
         errors = response['errors']
-        self.assertIn(INVALID_HOUSE_CODE_MSG.format('HOUSECODE'), errors)
+        self.assertIn(HOUSE_CODE_NOT_FOUND_MSG.format('HOUSECODE'), errors)
+        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
+
+    def test_non_existant_house_code_returns_error(self):
+        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '7', 'max_temp': '20'})
+        response = json.loads(response.content)
+        self.assertEqual(response['errors'], [HOUSE_CODE_NOT_FOUND_MSG.format('FA-32')])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
     def test_open_input(self):
         # not provided
+        HouseCode.objects.create(code="FA-32")
         response = self.client.post('/api/valve/FA-32', data={"min_temp": '7', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
@@ -221,6 +225,7 @@ class ApiValveTest(ApiViewTest):
         
     def test_min_temp_input(self):
         # not provided
+        HouseCode.objects.create(code="FA-32")
         response = self.client.post('/api/valve/FA-32', data={'open_input': '50', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
@@ -257,6 +262,7 @@ class ApiValveTest(ApiViewTest):
 
     def test_max_temp_input(self):
         # not provided
+        HouseCode.objects.create(code="FA-32")
         response = self.client.post('/api/valve/FA-32', data={"open_input": '50', "min_temp": '7'})
         response = json.loads(response.content)
         errors = response['errors']
@@ -292,6 +298,7 @@ class ApiValveTest(ApiViewTest):
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
     def test_max_temp_greater_than_min_temp(self):
+        HouseCode.objects.create(code="FA-32")
         response = self.client.post('/api/valve/FA-32', data={'open_input': '50', 'min_temp': '20', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']

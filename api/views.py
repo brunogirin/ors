@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.core.exceptions import ValidationError
 from django.utils.datastructures import MultiValueDictKeyError
-from api.models import HouseCode, INVALID_HOUSE_CODE_MSG
+from api.models import HouseCode, INVALID_HOUSE_CODE_MSG, HOUSE_CODE_NOT_FOUND_MSG
 from api.models import Debug, VALID_COLOURS, VALID_FLASH, Led
 
 # Create your views here.
@@ -136,12 +136,11 @@ def valve_view(request, house_code):
     data = request.POST
     min_temp = None
 
-    house_code = HouseCode(code=house_code)
     try:
-        house_code.full_clean()
-    except ValidationError as e:
+        house_code = HouseCode.objects.get(code=house_code)
+    except HouseCode.DoesNotExist as e:
         response['status'] = INVALID_INPUT_STATUS
-        response['errors'] = e.message_dict['code']
+        response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(house_code)]
         return JsonResponse(response)
 
     try:

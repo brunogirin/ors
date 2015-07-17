@@ -23,20 +23,28 @@ class StatusTest(FunctionalTest):
     def initialise_page(self):
         self.browser.get(self.server_url)
         self.section = self.browser.find_element_by_id("id-status-section")
+        self.house_code_input = self.browser.find_element_by_id("id-house-code-input")
         self.button = self.section.find_element_by_css_selector('input[type="submit"]')
 
     def test_main(self):
         self.initialise_page()
         h2 = self.section.find_element_by_tag_name('h2')
-        self.assertEqual(h2.text, 'POST /api/status/house-code')
+        self.assertEqual(h2.text, 'POST /api/status/<house-code>')
 
+        section = self.browser.find_element_by_id("id-post-house-codes-section")
+        input = section.find_element_by_id("id-house-codes-input")
+        input.send_keys("FA-32")
+        button = section.find_element_by_css_selector('input[type="submit"]')
+        button.click()
+
+        self.house_code_input.send_keys('FA-32')
         self.button.click()
-        self.assertEqual(self.browser.current_url, self.server_url + '/api/status/house-code')
+        self.assertEqual(self.browser.current_url, self.server_url + '/api/status/FA-32')
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], 200)
         
         # TODO: Finish this test
-        expected_content = {'status': 200, 'content': {'relative-humidity': 0, 'temperature-opentrv': 0, 'temperature-ds18b20': 0, 'window': 0, 'switch': 0, 'last-updated-all': 0, 'last-updated-temperature': 0, 'led': 0, 'synchronising': 0, 'ambient-light': 0, 'house-code': 0}}
+        expected_content = {'status': 200, 'content': {'relative-humidity': None, 'temperature-opentrv': None, 'temperature-ds18b20': None, 'window': None, 'switch': None, 'last-updated-all': None, 'last-updated-temperature': None, 'led': None, 'synchronising': None, 'ambient-light': None, 'house-code': 'FA-32'}}
         self.assertEqual(json_response, expected_content)
 
 class LedTest(FunctionalTest):

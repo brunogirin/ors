@@ -1,3 +1,4 @@
+import datetime
 from django.db import models
 from django.core.exceptions import ValidationError
 
@@ -10,6 +11,14 @@ HOUSE_CODE_NOT_FOUND_MSG = "house-code not found: {}"
 class HouseCode(models.Model):
     code = models.CharField(primary_key=True, max_length=5)
     temperature_opentrv = models.CharField(max_length=6, default=None, null=True, blank=True)
+    ds18b20_temperature = models.CharField(max_length=6, default=None, null=True, blank=True)
+    button = models.CharField(max_length=3, default="off", choices=[(i, i) for i in ["off", "on"]])
+    led = models.IntegerField(choices=[(i, i) for i in range(4)], default=0)
+    synchronising = models.CharField(max_length=3, default="off", choices=[(i, i) for i in ["off", "on"]])
+    relative_humidity = models.IntegerField(choices=[(i, i) for i in range(101)], default=0)
+    window = models.CharField(max_length=6, choices=[(i, i) for i in ["open", "closed"]], default="closed")
+    last_updated = models.DateTimeField(default=None, null=True, blank=True)
+    last_updated_temperatures = models.DateTimeField(default=None, null=True, blank=True)
 
     def __str__(self):
         return str(self.code)

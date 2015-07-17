@@ -5,13 +5,78 @@
   </header>
   <body>
     <h1>REV2 Emulator</h1>
-    <form action="/rev2-emulator/" method="POST"> {% csrf_token %}
-      <table>
-	<tr><td><label for="id-house-code-input">House Code:</label></td><td><input id="id-house-code-input" name="house-code" type="text" /></td></tr>
-	<tr><td><label for="id-house-code-input">Room Temp:</label></td><td><input id="id-room-temp-input" name="room-temp" type="text" /></td></tr>
-	<tr><td></td><td><input type="submit" value="Submit" /></td></tr>
-      </table>
-    </form>
+    <!-- <form action="/rev2-emulator/" method="POST"> {% csrf_token %} -->
+    <table>
+      <tr>
+	<td><label for="id-house-code-input">House Code:</label></td>
+	<td><input id="id-house-code-input" name="house-code" type="text" /></td>
+	<td></td>
+      </tr>
+      <tr>
+	<td><label for="id-house-code-input">Room Temp:</label></td>
+	<td><input id="id-room-temp-input" name="room-temp" type="text" /></td>
+	<td><button id="id-room-temp-send-button">Send</button></td>
+      </tr>
+
+      <tr>
+	<td><label for="id-db18b20-temp-input">DB18B20 Temp:</label></td>
+	<td><input id="id-db18b20-temp-input" name="db18b20-temp" type="text" /></td>
+	<td><button id="id-db18b20-temp-send-button">Send</button></td>
+      </tr>
+
+      <tr>
+	<td><label for="id-button-input">Button:</label></td>
+	<td><input id="id-button-input" type="checkbox" /></td>
+	<td><button id="id-button-send-button">Send</button></td>
+      </tr>
+
+      <tr>
+	<td><label for="id-led-input">LED:</label></td>
+	<td><input id="id-led-input" name="led" type="number" min="0" max="3" /></td>
+	<td><button id="id-led-send-button">Send</button></td>
+      </tr>
+
+      <tr>
+	<td><label for="id-synchronising-input">Synchronising:</label></td>
+	<td><input id="id-synchronising-input" name="synchronising" type="checkbox" /></td>
+	<td><button id="id-synchronising-send-button">Send</button></td>
+      </tr>
+
+      <tr>
+	<td><label for="id-relative-humidity-input">Relative Humidity:</label></td>
+	<td><input id="id-relative-humidity-input" name="relative-humidity" type="number" min="0" max="100" /></td>
+	<td><button id="id-relative-humidity-send-button">Send</button></td>
+      </tr>
+
+      <tr>
+	<td><label for="id-window-input">Window (checked: open):</label></td>
+	<td><input id="id-window-input" name="window" type="checkbox" /></td>
+	<td><button id="id-window-send-button">Send</button></td>
+      </tr>
+
+      <tr>
+	<td><label for="id-last-updated-input">Last Updated:</label></td>
+	<td><input id="id-last-updated-input" name="last-updated" type="datetime" /></td>
+	<td><button id="id-last-updated-send-button">Send</button></td>
+      </tr>
+
+      <tr>
+	<td><label for="id-last-updated-temperatures-input">Last Updated Temperatures:</label></td>
+	<td><input id="id-last-updated-temperatures-input" name="last-updated-temperatures" type="datetime" /></td>
+	<td><button id="id-last-updated-temperatures-send-button">Send</button></td>
+      </tr>
+
+      <tr>
+	<td><label for="id-get-cached-contents-interval-input">Get Cached Contents Interval:</label></td>
+	<td><input id="id-get-cached-contents-interval-input" name="get-cached-contents-interval" type="number" min="0" max="10" /></td>
+	<td><button id="id-get-cached-contents-interval-send-button">Send</button></td>
+      </tr>
+
+    </table>
+    <!-- </form> -->
+
+    <h2>Cache</h2>
+    <code>Waiting for signal</code>
   </body>
 </html>
     

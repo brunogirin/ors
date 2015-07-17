@@ -36,12 +36,13 @@ class ApiStatusTest(ApiViewTest):
         found = resolve('/api/status/house-code')
         self.assertEqual(found.func, api.views.status_view)
 
-    # TODO: Need to know what the model should be
-    def test_main(self):
-        house_code = HouseCode.objects.create(code="FA-32")
+    # TODO - Add other attributes of the house code
+    def test_returns_house_code_values(self):
+        house_code = HouseCode.objects.create(code='FA-32', temperature_opentrv='23.125')
         response = self.client.get('/api/status/FA-32')
         response = json.loads(response.content)
-        self.assertEqual(response, {'status': 200, 'content': {'relative-humidity': None, 'temperature-opentrv': None, 'temperature-ds18b20': None, 'window': None, 'switch': None, 'last-updated-all': None, 'last-updated-temperature': None, 'led': None, 'synchronising': None, 'ambient-light': None, 'house-code': 'FA-32'}})
+        self.assertEqual(response['status'], 200)
+        self.assertEqual(response['content']['temperature-opentrv'], '23.125')
 
 class ApiLedTest(ApiViewTest):
     

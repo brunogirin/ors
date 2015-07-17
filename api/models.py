@@ -8,7 +8,8 @@ HOUSE_CODE_NOT_FOUND_MSG = "house-code not found: {}"
 
 # Create your models here.
 class HouseCode(models.Model):
-    code = models.CharField(primary_key=True, max_length=50)
+    code = models.CharField(primary_key=True, max_length=5)
+    temperature_opentrv = models.CharField(max_length=6, default=None, null=True, blank=True)
 
     def __str__(self):
         return str(self.code)

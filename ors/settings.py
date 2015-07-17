@@ -41,6 +41,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'api',
     'ors',
+    'rev2_emulator',
 )
 
 MIDDLEWARE_CLASSES = (

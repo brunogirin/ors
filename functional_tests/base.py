@@ -10,7 +10,7 @@ class FunctionalTest(StaticLiveServerTestCase):
     def get_status(self, house_code):
         self.browser.get(self.server_url)
         section = self.browser.find_element_by_id("id-status-section")
-        input = section.find_element_by_id("id-house-codes-input")
+        input = section.find_element_by_id("id-house-code-input")
         input.send_keys(house_code)
         button = section.find_element_by_css_selector('input[type="submit"]')
         button.click()

@@ -1,7 +1,7 @@
 import json
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils.datastructures import MultiValueDictKeyError
 from api.models import HouseCode, INVALID_HOUSE_CODE_MSG, HOUSE_CODE_NOT_FOUND_MSG
 from api.models import Debug, VALID_COLOURS, VALID_FLASH, Led
@@ -21,18 +21,23 @@ def status_view(request, house_code):
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(house_code)]
         return JsonResponse(response)
 
-    response['content'] = {'relative-humidity': None, 
-                           'temperature-opentrv': None, 
-                           'temperature-ds18b20': None, 
-                           'window': None, 
-                           'switch': None, 
-                           'last-updated-all': None, 
-                           'last-updated-temperature': None, 
-                           'led': None, 
-                           'synchronising': None, 
-                           'ambient-light': None, 
-                           'house-code': house_code.code
-                           }
+    response['content'] = {
+        'house-code': house_code.code,
+        'temperature-opentrv': house_code.temperature_opentrv,
+        }
+
+#     response['content'] = {'relative-humidity': None, 
+#                            'temperature-opentrv': None, 
+#                            'temperature-ds18b20': None, 
+#                            'window': None, 
+#                            'switch': None, 
+#                            'last-updated-all': None, 
+#                            'last-updated-temperature': None, 
+#                            'led': None, 
+#                            'synchronising': None, 
+#                            'ambient-light': None, 
+#                            'house-code': house_code.code
+#                            }
 
     return JsonResponse(response)
 
@@ -42,7 +47,7 @@ def led_view(request, house_code):
 
     try:
         house_code = HouseCode.objects.get(code=house_code)
-    except HouseCode.DoesNotExist:
+    except ObjectDoesNotExist:
         response['status'] = INVALID_INPUT_STATUS
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(house_code)]
         return JsonResponse(response)

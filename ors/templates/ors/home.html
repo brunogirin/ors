@@ -2,9 +2,11 @@
 <html lang="en">
   <head>
     <title>Home Page</title>
+    {% load staticfiles %}
+    <script src="{% static "jquery/jquery-1.11.3.min.js" %}"></script>
   </head>
   <body>
-    <h1>Home Page - REST Server Emulator</h1>
+    <h1>Home Page - Open REST Server</h1>
     <section id="id-get-house-codes-section">
       <h2>GET /api/house-codes</h2>
       <form action="/api/house-codes">
@@ -64,13 +66,16 @@
     </section>
 
     <section id="id-status-section">
-      <h2>POST /api/status/house-code</h2>
+      <h2>POST /api/status/<code>&lthouse-code&gt</code></h2>
       <form action="/api/status/house-code" method="GET">
 	<table>
-	  <tr><td><input type="submit" value="Submit" /></td></tr>
+	  <tr><td><label for="id-house-code-input">House Code:</td><td><input id="id-house-code-input" type="text" /></td></tr>
+	  <tr><td></td><td><input type="submit" value="Submit" /></td></tr>
 	</table>
       </form>
     </section>
+
+    <script src="{% static "ors/home.js" %}"></script>
 
   </body>
 </html>

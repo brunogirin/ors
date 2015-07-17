@@ -9,7 +9,7 @@ function displayStatuses(){
 		async: true,
 		complete: function(response){
 		    console.log("ajax ok");
-		    $("code").html(JSON.stringify(response.responseJSON));
+		    $("code").html(JSON.stringify(response.responseJSON.content));
 		    $("code").slideDown();
 		}
 	    }

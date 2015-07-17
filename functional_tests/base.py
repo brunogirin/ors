@@ -7,6 +7,22 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 class FunctionalTest(StaticLiveServerTestCase):
 
+    def get_status(self, house_code):
+        self.browser.get(self.server_url)
+        section = self.browser.find_element_by_id("id-status-section")
+        input = section.find_element_by_id("id-house-codes-input")
+        input.send_keys(house_code)
+        button = section.find_element_by_css_selector('input[type="submit"]')
+        button.click()
+
+    def post_house_code(self, house_code):
+        self.browser.get(self.server_url)
+        section = self.browser.find_element_by_id("id-post-house-codes-section")
+        input = section.find_element_by_id("id-house-codes-input")
+        input.send_keys(house_code)
+        button = section.find_element_by_css_selector('input[type="submit"]')
+        button.click()
+
     def get_json_response(self):
         try:
             json_response = self.browser.find_element_by_tag_name("pre")

@@ -3,7 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from .base import FunctionalTest
 from api.views import INVALID_INPUT_STATUS, VALID_COLOURS, VALID_FLASH, INVALID_HOUSE_CODE_MSG
-from api.models import HOUSE_CODE_NOT_FOUND_MSG
+from api.models import HOUSE_CODE_NOT_FOUND_MSG, HouseCode
 
 class StatusTest(FunctionalTest):
     '''
@@ -23,7 +23,7 @@ class StatusTest(FunctionalTest):
     def initialise_page(self):
         self.browser.get(self.server_url)
         self.section = self.browser.find_element_by_id("id-status-section")
-        self.house_code_input = self.browser.find_element_by_id("id-house-code-input")
+        self.house_code_input = self.section.find_element_by_id("id-house-code-input")
         self.button = self.section.find_element_by_css_selector('input[type="submit"]')
 
     def test_main(self):
@@ -37,6 +37,7 @@ class StatusTest(FunctionalTest):
         button = section.find_element_by_css_selector('input[type="submit"]')
         button.click()
 
+        self.initialise_page()
         self.house_code_input.send_keys('FA-32')
         self.button.click()
         self.assertEqual(self.browser.current_url, self.server_url + '/api/status/FA-32')
@@ -85,7 +86,7 @@ class LedTest(FunctionalTest):
     def initialise_page(self):
         self.browser.get(self.server_url)
         self.section = self.browser.find_element_by_id("id-led-section")
-        self.house_code_input = self.browser.find_element_by_css_selector('input#id-house-code-input')
+        self.house_code_input = self.section.find_element_by_css_selector('input#id-house-code-input')
         self.colour_input = self.section.find_element_by_css_selector("input#id-colour-input")
         self.flash_input = self.section.find_element_by_css_selector("input#id-flash-input")
         self.button = self.section.find_element_by_css_selector('input[type="submit"]')
@@ -113,7 +114,7 @@ class LedTest(FunctionalTest):
         x.expected_status_code = 200
         x.expected_content = None
         self.run_input_validation_test(x)
-        self.assertEqual(self.browser.current_url, self.server_url + '/led/house-code')
+        self.assertEqual(self.browser.current_url, self.server_url + '/api/led/FA-32')
 
         # user inputs non existent house code
         x = self.PostTestParameterSet()
@@ -263,10 +264,10 @@ class ValveTest(FunctionalTest):
 
     def run_input_validation_test(self, parameter_set):
         self.initialise_page()
-        self.house_code.send_keys(parameter_set.inputs.house_code)
+        self.house_code_input.send_keys(parameter_set.inputs.house_code)
         self.open_input.send_keys(parameter_set.inputs.open_input)
-        self.min_temp.send_keys(parameter_set.inputs.min_temp)
-        self.max_temp.send_keys(parameter_set.inputs.max_temp)
+        self.min_temp_input.send_keys(parameter_set.inputs.min_temp)
+        self.max_temp_input.send_keys(parameter_set.inputs.max_temp)
         self.button.click()
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], parameter_set.expected_status_code)
@@ -277,10 +278,10 @@ class ValveTest(FunctionalTest):
     def initialise_page(self):
         self.browser.get(self.server_url)
         self.section = self.browser.find_element_by_id("id-valve-section")
-        self.house_code = self.section.find_element_by_css_selector("input#id-house-code")
+        self.house_code_input = self.section.find_element_by_css_selector("input#id-house-code-input")
         self.open_input = self.section.find_element_by_css_selector("input#id-open-input")
-        self.max_temp = self.section.find_element_by_css_selector("input#id-max-temp-input")
-        self.min_temp = self.section.find_element_by_css_selector("input#id-min-temp-input")
+        self.max_temp_input = self.section.find_element_by_css_selector("input#id-max-temp-input")
+        self.min_temp_input = self.section.find_element_by_css_selector("input#id-min-temp-input")
         self.button = self.section.find_element_by_css_selector('input[type="submit"]')
 
     def test_main(self):
@@ -298,19 +299,19 @@ class ValveTest(FunctionalTest):
         # user inputs valid input
         self.initialise_page()
 
-        self.house_code.send_keys('FA-32')
+        self.house_code_input.send_keys('FA-32')
         self.open_input.send_keys("50")
-        self.min_temp.send_keys("20")
-        self.max_temp.send_keys("25")
+        self.min_temp_input.send_keys("20")
+        self.max_temp_input.send_keys("25")
         self.button.click()
-        self.assertEqual(self.browser.current_url, self.server_url + '/valve/house-code')
+        self.assertEqual(self.browser.current_url, self.server_url + '/api/valve/FA-32')
         # TODO: Test the response of the form submission, don't know what the response looks like currently
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], 200)
 
         # user inputs a house-code that has a valid format but does not exist
         self.initialise_page()
-        self.house_code.send_keys('FA-11')
+        self.house_code_input.send_keys('FA-11')
         self.button.click()
         response = json.loads(self.browser.find_element_by_tag_name("pre").text)
         self.assertEqual(response['errors'], [HOUSE_CODE_NOT_FOUND_MSG.format('FA-11')])

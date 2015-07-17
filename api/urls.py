@@ -6,5 +6,5 @@ urlpatterns = [
     url(r'^valve/(?P<house_code>.*)$', 'api.views.valve_view', name='valve_view'),
     url(r'^led/(?P<house_code>.*)$', 'api.views.led_view', name='led_view'),
     url(r'^debug$', 'api.views.debug_view', name='debug_view'),
-    url(r'^status/house-code', 'api.views.status_view', name='status_view'),
+    url(r'^status/(?P<house_code>.*)$', 'api.views.status_view', name='status_view'),
 ]

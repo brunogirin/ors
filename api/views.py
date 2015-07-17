@@ -10,8 +10,31 @@ from api.models import Debug, VALID_COLOURS, VALID_FLASH, Led
 
 INVALID_INPUT_STATUS = 300
 
-def status_view(request):
-    return JsonResponse({'status': 200, 'content': {'relative-humidity': 0, 'temperature-opentrv': 0, 'temperature-ds18b20': 0, 'window': 0, 'switch': 0, 'last-updated-all': 0, 'last-updated-temperature': 0, 'led': 0, 'synchronising': 0, 'ambient-light': 0, 'house-code': 0}})
+def status_view(request, house_code):
+    response = {'status': 200, 'content': None}
+    errors = []
+
+    try:
+        house_code = HouseCode.objects.get(code=house_code)
+    except HouseCode.DoesNotExist:
+        response['status'] = INVALID_INPUT_STATUS
+        response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(house_code)]
+        return JsonResponse(response)
+
+    response['content'] = {'relative-humidity': None, 
+                           'temperature-opentrv': None, 
+                           'temperature-ds18b20': None, 
+                           'window': None, 
+                           'switch': None, 
+                           'last-updated-all': None, 
+                           'last-updated-temperature': None, 
+                           'led': None, 
+                           'synchronising': None, 
+                           'ambient-light': None, 
+                           'house-code': house_code.code
+                           }
+
+    return JsonResponse(response)
 
 def led_view(request, house_code):
     response = {'status': 200, 'content': None}

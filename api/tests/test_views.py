@@ -38,9 +38,10 @@ class ApiStatusTest(ApiViewTest):
 
     # TODO: Need to know what the model should be
     def test_main(self):
-        response = self.client.get('/api/status/house-code')
+        house_code = HouseCode.objects.create(code="FA-32")
+        response = self.client.get('/api/status/FA-32')
         response = json.loads(response.content)
-        self.assertEqual(response, {'status': 200, 'content': {'relative-humidity': 0, 'temperature-opentrv': 0, 'temperature-ds18b20': 0, 'window': 0, 'switch': 0, 'last-updated-all': 0, 'last-updated-temperature': 0, 'led': 0, 'synchronising': 0, 'ambient-light': 0, 'house-code': 0}})
+        self.assertEqual(response, {'status': 200, 'content': {'relative-humidity': None, 'temperature-opentrv': None, 'temperature-ds18b20': None, 'window': None, 'switch': None, 'last-updated-all': None, 'last-updated-temperature': None, 'led': None, 'synchronising': None, 'ambient-light': None, 'house-code': 'FA-32'}})
 
 class ApiLedTest(ApiViewTest):
     

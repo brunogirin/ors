@@ -27,7 +27,7 @@ DEBUG = True
 
 DOMAIN = "localhost"
 
-ALLOWED_HOSTS = [DOMAIN]
+ALLOWED_HOSTS = [DOMAIN, 'ors']
 
 
 # Application definition

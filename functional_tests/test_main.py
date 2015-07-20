@@ -1,4 +1,7 @@
+import datetime
+import time
 import json
+from collections import OrderedDict
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from .base import FunctionalTest
@@ -20,6 +23,8 @@ class StatusTest(FunctionalTest):
     house-code
     '''
 
+    maxDiff = None
+    
     def initialise_page(self):
         self.browser.get(self.server_url)
         self.section = self.browser.find_element_by_id("id-status-section")
@@ -37,16 +42,57 @@ class StatusTest(FunctionalTest):
         button = section.find_element_by_css_selector('input[type="submit"]')
         button.click()
 
+        # user gets the status of the house code entered previously
         self.initialise_page()
         self.house_code_input.send_keys('FA-32')
         self.button.click()
         self.assertEqual(self.browser.current_url, self.server_url + '/api/status/FA-32')
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], 200)
+
+        expected_content = OrderedDict()
+        expected_content['house-code'] = 'FA-32'
+        expected_content['relative-humidity'] = None
+        expected_content['temperature-opentrv'] = None
+        expected_content['temperature-ds18b20'] = None
+        expected_content['window'] = None
+        expected_content['switch'] = None
+        expected_content['last-updated-all'] = None
+        expected_content['last-updated-temperature'] = None
+        expected_content['synchronising'] = None
+        expected_content['ambient-light'] = None
+        self.assertEqual(json_response['status'], 200)
+        self.assertEqual(json_response['content'], expected_content)
         
-        # TODO: Finish this test
-#         expected_content = {'status': 200, 'content': {'relative-humidity': None, 'temperature-opentrv': None, 'temperature-ds18b20': None, 'window': None, 'switch': None, 'last-updated-all': None, 'last-updated-temperature': None, 'led': None, 'synchronising': None, 'ambient-light': None, 'house-code': 'FA-32'}}
-#         self.assertEqual(json_response, expected_content)
+        # the user updates the temperature-opentrv
+        self.browser.get(self.server_url + '/rev2-emulator')
+        house_code_input = self.browser.find_element_by_id('id-house-code-input')
+        house_code_input.send_keys('FA-32')
+        temperature_opentrv_input = self.browser.find_element_by_id('id-temperature-opentrv-input')
+        temperature_opentrv_input.send_keys('25\n')
+        # the user waits until the change shows in the cache field below
+        def ajax_success(b):
+            page_source = b.page_source
+            json_response = b.find_element_by_tag_name("code")
+            json_response = json.loads(json_response)
+            json_response['temperature-opentrv'] == '25'
+        WebDriverWait(
+            self.browser,
+            timeout=30).until(
+                ajax_succes,
+                'Could not find element with id {}. Page text was {}'.format(
+                    element_id, self.browser.find_element_by_tag_name('body').text
+                )
+            )
+        # the user goes back to the api page
+        self.browser.get(self.server_url)
+        # the user gets the status for the house-code
+        self.initialise_page()
+        self.house_code_input.send_keys('FA-32')
+        self.button.click()
+        json_response = self.get_json_response()
+        self.assertEqual(json_resposne['status'], 200)
+        self.assertEqual(json_response['content']['temperature-opentrv'], '25')
 
 class LedTest(FunctionalTest):
     '''

@@ -33,7 +33,7 @@ class EmulatorViewTest(TestCase):
         response = self.client.post('/rev2-emulator/')
         self.assertRedirects(response, '/rev2-emulator/')
 
-class TempView(TestCase):
+class TemperatureOpentrvViewTest(TestCase):
 
     def test_url(self):
         found = resolve('/rev2-emulator/temperature-opentrv')
@@ -45,41 +45,29 @@ class TempView(TestCase):
         hc = HouseCode.objects.first()
         self.assertEqual(hc.temperature_opentrv, '10.123')
 
-class Ds18b20TemperatureViewTest(TestCase):
+class TemperatureDs18b20ViewTest(TestCase):
 
     def test_url(self):
-        found = resolve('/rev2-emulator/ds18b20-temperature')
-        self.assertEqual(found.func, rev2_emulator.views.ds18b20_temperature_view)
+        found = resolve('/rev2-emulator/temperature-ds18b20')
+        self.assertEqual(found.func, rev2_emulator.views.temperature_ds18b20_view)
     
     def test_post_updates(self):
         hc = HouseCode.objects.create(code="FA-32")
-        response = self.client.post('/rev2-emulator/ds18b20-temperature', data={'house-code': 'FA-32', 'ds18b20-temp': '10.123'})
+        response = self.client.post('/rev2-emulator/temperature-ds18b20', data={'house-code': 'FA-32', 'temperature-ds18b20': '10.123'})
         hc = HouseCode.objects.first()
-        self.assertEqual(hc.ds18b20_temperature, '10.123')
+        self.assertEqual(hc.temperature_ds18b20, '10.123')
 
-class ButtonViewTest(TestCase):
+class SwitchViewTest(TestCase):
 
     def test_url(self):
-        found = resolve('/rev2-emulator/button')
-        self.assertEqual(found.func, rev2_emulator.views.button_view)
+        found = resolve('/rev2-emulator/switch')
+        self.assertEqual(found.func, rev2_emulator.views.switch_view)
     
     def test_post_updates(self):
         hc = HouseCode.objects.create(code="FA-32")
-        response = self.client.post('/rev2-emulator/button', data={'house-code': 'FA-32', 'button': 'on'})
+        response = self.client.post('/rev2-emulator/switch', data={'house-code': 'FA-32', 'switch': 'on'})
         hc = HouseCode.objects.first()
-        self.assertEqual(hc.button, 'on')
-
-class LedViewTest(TestCase):
-
-    def test_url(self):
-        found = resolve('/rev2-emulator/led')
-        self.assertEqual(found.func, rev2_emulator.views.led_view)
-    
-    def test_post_updates(self):
-        hc = HouseCode.objects.create(code="FA-32")
-        response = self.client.post('/rev2-emulator/led', data={'house-code': 'FA-32', 'led': '1'})
-        hc = HouseCode.objects.first()
-        self.assertEqual(hc.led, 1)
+        self.assertEqual(hc.switch, 'on')
 
 class SynchronisingViewTest(TestCase):
 
@@ -117,124 +105,34 @@ class WindowViewTest(TestCase):
         hc = HouseCode.objects.first()
         self.assertEqual(hc.window, 'open')
 
-class LastUpdatedViewTest(TestCase):
+class LastUpdatedAllViewTest(TestCase):
 
     def test_url(self):
-        found = resolve('/rev2-emulator/last-updated')
-        self.assertEqual(found.func, rev2_emulator.views.last_updated_view)
+        found = resolve('/rev2-emulator/last-updated-all')
+        self.assertEqual(found.func, rev2_emulator.views.last_updated_all_view)
     
     def test_post_updates(self):
         hc = HouseCode.objects.create(code="FA-32")
-        response = self.client.post('/rev2-emulator/last-updated', data={'house-code': 'FA-32', 'last-updated': '2015-07-17T16:07:39.646127'})
+        response = self.client.post('/rev2-emulator/last-updated-all', data={'house-code': 'FA-32', 'last-updated-all': '2015-07-17T16:07:39.646127'})
         hc = HouseCode.objects.first()
-        x = timezone.make_aware(datetime.datetime.strptime('2015-07-17T16:07:39.646127Z', "%Y-%m-%dT%H:%M:%S.%fZ"), timezone.get_current_timezone())
-        self.assertEqual(hc.last_updated, x)
+        x = datetime.datetime.strptime('2015-07-17T16:07:39.646127Z', "%Y-%m-%dT%H:%M:%S.%fZ")
+        x = timezone.make_aware(x, timezone.get_current_timezone())
+        self.assertEqual(hc.last_updated_all, x)
 
-class LastUpdatedTemperaturesViewTest(TestCase):
+class LastUpdatedTemperatureViewTest(TestCase):
 
     def test_url(self):
-        found = resolve('/rev2-emulator/last-updated-temperatures')
-        self.assertEqual(found.func, rev2_emulator.views.last_updated_temperatures_view)
+        found = resolve('/rev2-emulator/last-updated-temperature')
+        self.assertEqual(found.func, rev2_emulator.views.last_updated_temperature_view)
     
     def test_post_updates(self):
         hc = HouseCode.objects.create(code="FA-32")
-        response = self.client.post('/rev2-emulator/last-updated-temperatures', data={'house-code': 'FA-32', 'last-updated-temperatures': '2015-07-17T16:07:39.646127'})
+        response = self.client.post(
+            '/rev2-emulator/last-updated-temperature',
+            data={'house-code': 'FA-32', 'last-updated-temperature': '2015-07-17T16:07:39.646127'}
+        )
         hc = HouseCode.objects.first()
-        x = timezone.make_aware(datetime.datetime.strptime('2015-07-17T16:07:39.646127Z', "%Y-%m-%dT%H:%M:%S.%fZ"), timezone.get_current_timezone())
-        self.assertEqual(hc.last_updated_temperatures, x)
+        x = datetime.datetime.strptime('2015-07-17T16:07:39.646127Z', "%Y-%m-%dT%H:%M:%S.%fZ")
+        x = timezone.make_aware(x, timezone.get_current_timezone())
+        self.assertEqual(hc.last_updated_temperature, x)
 
-# class TempView(TestCase):
-
-#     def test_url(self):
-#         found = resolve('/rev2-emulator/temperature-opentrv')
-#         self.assertEqual(found.func, rev2_emulator.views.temperature_opentrv_view)
-    
-#     def test_post_updates(self):
-#         hc = HouseCode.objects.create(code="FA-32")
-#         response = self.client.post('/rev2-emulator/temperature-opentrv', data={'room-temp': '10.123'})
-#         hc = HouseCode.objects.first()
-#         self.assertEqual(hc.temperature_opentrv, '10.123')
-
-# class TempView(TestCase):
-
-#     def test_url(self):
-#         found = resolve('/rev2-emulator/temperature-opentrv')
-#         self.assertEqual(found.func, rev2_emulator.views.temperature_opentrv_view)
-    
-#     def test_post_updates(self):
-#         hc = HouseCode.objects.create(code="FA-32")
-#         response = self.client.post('/rev2-emulator/temperature-opentrv', data={'room-temp': '10.123'})
-#         hc = HouseCode.objects.first()
-#         self.assertEqual(hc.temperature_opentrv, '10.123')
-
-# class TempView(TestCase):
-
-#     def test_url(self):
-#         found = resolve('/rev2-emulator/temperature-opentrv')
-#         self.assertEqual(found.func, rev2_emulator.views.temperature_opentrv_view)
-    
-#     def test_post_updates(self):
-#         hc = HouseCode.objects.create(code="FA-32")
-#         response = self.client.post('/rev2-emulator/temperature-opentrv', data={'room-temp': '10.123'})
-#         hc = HouseCode.objects.first()
-#         self.assertEqual(hc.temperature_opentrv, '10.123')
-
-# class TempView(TestCase):
-
-#     def test_url(self):
-#         found = resolve('/rev2-emulator/temperature-opentrv')
-#         self.assertEqual(found.func, rev2_emulator.views.temperature_opentrv_view)
-    
-#     def test_post_updates(self):
-#         hc = HouseCode.objects.create(code="FA-32")
-#         response = self.client.post('/rev2-emulator/temperature-opentrv', data={'room-temp': '10.123'})
-#         hc = HouseCode.objects.first()
-#         self.assertEqual(hc.temperature_opentrv, '10.123')
-
-# class TempView(TestCase):
-
-#     def test_url(self):
-#         found = resolve('/rev2-emulator/temperature-opentrv')
-#         self.assertEqual(found.func, rev2_emulator.views.temperature_opentrv_view)
-    
-#     def test_post_updates(self):
-#         hc = HouseCode.objects.create(code="FA-32")
-#         response = self.client.post('/rev2-emulator/temperature-opentrv', data={'room-temp': '10.123'})
-#         hc = HouseCode.objects.first()
-#         self.assertEqual(hc.temperature_opentrv, '10.123')
-
-# class TempView(TestCase):
-
-#     def test_url(self):
-#         found = resolve('/rev2-emulator/temperature-opentrv')
-#         self.assertEqual(found.func, rev2_emulator.views.temperature_opentrv_view)
-    
-#     def test_post_updates(self):
-#         hc = HouseCode.objects.create(code="FA-32")
-#         response = self.client.post('/rev2-emulator/temperature-opentrv', data={'room-temp': '10.123'})
-#         hc = HouseCode.objects.first()
-#         self.assertEqual(hc.temperature_opentrv, '10.123')
-
-# class TempView(TestCase):
-
-#     def test_url(self):
-#         found = resolve('/rev2-emulator/temperature-opentrv')
-#         self.assertEqual(found.func, rev2_emulator.views.temperature_opentrv_view)
-    
-#     def test_post_updates(self):
-#         hc = HouseCode.objects.create(code="FA-32")
-#         response = self.client.post('/rev2-emulator/temperature-opentrv', data={'room-temp': '10.123'})
-#         hc = HouseCode.objects.first()
-#         self.assertEqual(hc.temperature_opentrv, '10.123')
-
-# class TempView(TestCase):
-
-#     def test_url(self):
-#         found = resolve('/rev2-emulator/temperature-opentrv')
-#         self.assertEqual(found.func, rev2_emulator.views.temperature_opentrv_view)
-    
-#     def test_post_updates(self):
-#         hc = HouseCode.objects.create(code="FA-32")
-#         response = self.client.post('/rev2-emulator/temperature-opentrv', data={'room-temp': '10.123'})
-#         hc = HouseCode.objects.first()
-#         self.assertEqual(hc.temperature_opentrv, '10.123')

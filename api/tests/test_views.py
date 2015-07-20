@@ -1,3 +1,4 @@
+from mock import Mock, patch
 from functools import wraps
 import json
 import api.views
@@ -31,19 +32,25 @@ class ApiViewTest(TestCase):
         return wrapper
 
 class ApiStatusTest(ApiViewTest):
+
+    maxDiff = None
     
     def test_api_url_resolves(self):
         found = resolve('/api/status/house-code')
         self.assertEqual(found.func, api.views.status_view)
 
     # TODO - Add other attributes of the house code
-    def test_returns_house_code_values(self):
+    @patch('api.models.HouseCode.to_dict')
+    def test_returns_house_code_values(self, to_dict_mock):
         house_code = HouseCode.objects.create(code='FA-32', temperature_opentrv='23.125')
+        expected_content = {'house-code': 'FA-32'}
+        to_dict_mock.return_value = expected_content
         response = self.client.get('/api/status/FA-32')
         response = json.loads(response.content)
         self.assertEqual(response['status'], 200)
-        self.assertEqual(response['content']['temperature-opentrv'], '23.125')
-
+        self.assertEqual(response['content'], expected_content)
+        to_dict_mock.called_once_with()
+        
 class ApiLedTest(ApiViewTest):
     
     def test_api_url_resolves(self):

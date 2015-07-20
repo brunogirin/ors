@@ -21,24 +21,8 @@ def status_view(request, house_code):
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(house_code)]
         return JsonResponse(response)
 
-    response['content'] = {
-        'house-code': house_code.code,
-        'temperature-opentrv': house_code.temperature_opentrv,
-        }
-
-#     response['content'] = {'relative-humidity': None, 
-#                            'temperature-opentrv': None, 
-#                            'temperature-ds18b20': None, 
-#                            'window': None, 
-#                            'switch': None, 
-#                            'last-updated-all': None, 
-#                            'last-updated-temperature': None, 
-#                            'led': None, 
-#                            'synchronising': None, 
-#                            'ambient-light': None, 
-#                            'house-code': house_code.code
-#                            }
-
+    response['content'] = house_code.to_dict()
+    
     return JsonResponse(response)
 
 def led_view(request, house_code):

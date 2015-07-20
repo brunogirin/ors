@@ -24,21 +24,15 @@ def temperature_opentrv_view(request):
     hc.save()
     return JsonResponse({'status': 200, 'content': None})
 
-def ds18b20_temperature_view(request):
+def temperature_ds18b20_view(request):
     hc = HouseCode.objects.get(code=request.POST['house-code'])
-    hc.ds18b20_temperature = request.POST['ds18b20-temp']
+    hc.temperature_ds18b20 = request.POST['temperature-ds18b20']
     hc.save()
     return JsonResponse({'status': 200, 'content': None})
 
-def button_view(request):
+def switch_view(request):
     hc = HouseCode.objects.get(code=request.POST['house-code'])
-    hc.button = request.POST['button']
-    hc.save()
-    return JsonResponse({'status': 200, 'content': None})
-
-def led_view(request):
-    hc = HouseCode.objects.get(code=request.POST['house-code'])
-    hc.led = request.POST['led']
+    hc.switch = request.POST['switch']
     hc.save()
     return JsonResponse({'status': 200, 'content': None})
 
@@ -60,15 +54,15 @@ def window_view(request):
     hc.save()
     return JsonResponse({'status': 200, 'content': None})
 
-def last_updated_view(request):
+def last_updated_all_view(request):
     hc = HouseCode.objects.get(code=request.POST['house-code'])
-    hc.last_updated = request.POST['last-updated']
+    hc.last_updated_all = request.POST['last-updated-all']
     hc.save()
     return JsonResponse({'status': 200, 'content': None})
 
-def last_updated_temperatures_view(request):
+def last_updated_temperature_view(request):
     hc = HouseCode.objects.get(code=request.POST['house-code'])
-    hc.last_updated_temperatures = request.POST['last-updated-temperatures']
+    hc.last_updated_temperature = request.POST['last-updated-temperature']
     hc.save()
     return JsonResponse({'status': 200, 'content': None})
 
@@ -78,14 +72,13 @@ def get_statuses(request):
         x = {
             'house-code': hc.code,
             'temperature-opentrv': hc.temperature_opentrv,
-            'ds18b20-temperature': hc.ds18b20_temperature,
-            'button': hc.button,
-            'led': hc.led,
+            'temperature-ds18b20': hc.temperature_ds18b20,
+            'switch': hc.switch,
             'synchronising': hc.synchronising,
             'relative-humidity': hc.relative_humidity,
             'window': hc.window,
-            'last-updated': hc.last_updated.isoformat() if hc.last_updated else hc.last_updated,
-            'last-updated-temperatures': hc.last_updated_temperatures.isoformat() if hc.last_updated_temperatures else None,
+            'last-updated_all': hc.last_updated_all.isoformat() if hc.last_updated_all else hc.last_updated_all,
+            'last-updated-temperature': hc.last_updated_temperature.isoformat() if hc.last_updated_temperature else None,
             }
         content += [x]
     return JsonResponse({'status': 200, 'content': content})

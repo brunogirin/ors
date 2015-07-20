@@ -73,3 +73,5 @@ class FunctionalTest(StaticLiveServerTestCase):
 
     def tearDown(self):
         self.browser.quit()
+        import time
+        time.sleep(1)

@@ -1,3 +1,5 @@
+import collections
+import json
 import datetime
 import rev2_emulator.views
 from django.utils import timezone
@@ -8,6 +10,32 @@ from api.models import HouseCode
 
 # Create your tests here.
 
+class GetStatusesTest(TestCase):
+
+    def test_url(self):
+        found = resolve('/rev2-emulator/get-statuses')
+        self.assertEqual(found.func, rev2_emulator.views.get_statuses)
+
+    def test_empty_house_code_database(self):
+        response = self.client.get('/rev2-emulator/get-statuses')
+        response = json.loads(response.content)
+        self.assertEqual(response['status'], 200)
+        self.assertEqual(response['content'], [])
+
+    def test_default_house_code_object(self):
+        hc = HouseCode.objects.create(code='FA-32')
+        response = self.client.get('/rev2-emulator/get-statuses')
+        response = json.JSONDecoder(object_pairs_hook=collections.OrderedDict).decode(response.content)
+        self.assertEqual([hc.to_dict()], response['content'])
+
+    def test_multiple_house_code_objects(self):
+        hc1 = HouseCode.objects.create(code='FA-32')
+        hc2 = HouseCode.objects.create(code='EE-EE', temperature_opentrv='23.333')
+        response = self.client.get('/rev2-emulator/get-statuses')
+        response = json.JSONDecoder(object_pairs_hook=collections.OrderedDict).decode(response.content)
+        self.assertEqual([hc1.to_dict(), hc2.to_dict()], response['content'])
+        
+
 class EmulatorViewTest(TestCase):
 
     def test_url(self):
@@ -17,21 +45,6 @@ class EmulatorViewTest(TestCase):
     def test_template(self):
         response = self.client.get('/rev2-emulator/')
         self.assertTemplateUsed(response, 'rev2_emulator/home.html')
-
-    def test_post_redirects_to_api_web_page(self):
-        hc = HouseCode.objects.create(code="FA-32")
-        response = self.client.post('/rev2-emulator/', data={'room-temp': '23.125', 'house-code': 'FA-32'})
-        self.assertRedirects(response, '/')
-
-    def test_post_updates_temperature(self):
-        hc = HouseCode.objects.create(code="FA-32")
-        response = self.client.post('/rev2-emulator/', data={'room-temp': '23.125', 'house-code': 'FA-32'})
-        hc = HouseCode.objects.get(code="FA-32")
-        self.assertEqual(hc.temperature_opentrv, '23.125')
-
-    def test_invalid_input_redirects_to_the_same_page(self):
-        response = self.client.post('/rev2-emulator/')
-        self.assertRedirects(response, '/rev2-emulator/')
 
 class TemperatureOpentrvViewTest(TestCase):
 

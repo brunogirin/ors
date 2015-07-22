@@ -1,6 +1,7 @@
 import json
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
 from .base import FunctionalTest
 from api.views import INVALID_INPUT_STATUS, VALID_COLOURS, VALID_FLASH, INVALID_HOUSE_CODE_MSG
 from api.models import HOUSE_CODE_NOT_FOUND_MSG, HouseCode
@@ -10,66 +11,51 @@ class Rev2EmulatorTest(FunctionalTest):
     def initialise_page(self):
         self.browser.get(self.server_url + '/rev2-emulator')
         self.house_code_input = self.browser.find_element_by_id('id-house-code-input')
-        self.room_temp_input = self.browser.find_element_by_id('id-room-temp-input')
-        self.room_temp_send_button = self.browser.find_element_by_id('id-room-temp-send-button')
-        self.ds18b20_temp_input = self.browser.find_element_by_id('id-ds18b20-temp-input')
-        self.ds18b20_temp_send_button = self.browser.find_element_by_id('id-ds18b20-temp-send-button')
-        self.button_input = self.browser.find_element_by_id('id-button-input')
-        self.button_send_button = self.browser.find_element_by_id('id-button-send-button')
-        self.led_input = self.browser.find_element_by_id('id-led-input')
-        self.led_send_button = self.browser.find_element_by_id('id-led-send-button')
-        self.synchronising_input = self.browser.find_element_by_id('id-synchronising-input')
-        self.synchronising_send_button = self.browser.find_element_by_id('id-synchronising-send-button')
+        self.relative_humidity_form = self.browser.find_element_by_id('id-relative-humidity-form')
         self.relative_humidity_input = self.browser.find_element_by_id('id-relative-humidity-input')
-        self.relative_humiidty_send_button = self.browser.find_element_by_id('id-relative-humidity-send-button')
+        self.temperature_opentrv_form = self.browser.find_element_by_id('id-temperature-opentrv-form')
+        self.temperature_opentrv_input = self.browser.find_element_by_id('id-temperature-opentrv-input')
+        self.temperature_ds18b20_form = self.browser.find_element_by_id('id-temperature-ds18b20-form')
+        self.temperature_ds18b20_input = self.browser.find_element_by_id('id-temperature-ds18b20-input')
+        self.window_form = self.browser.find_element_by_id('id-window-form')
         self.window_input = self.browser.find_element_by_id('id-window-input')
-        self.window_send_button = self.browser.find_element_by_id('id-window-send-button')
-        self.last_updated_input = self.browser.find_element_by_id('id-last-updated-input')
-        self.last_updated_send_button = self.browser.find_element_by_id('id-last-updated-send-button')
-        self.last_updated_temperatures_input = self.browser.find_element_by_id('id-last-updated-temperatures-input')
-        self.last_updated_temperatures_send_button = self.browser.find_element_by_id('id-last-updated-temperatures-send-button')
+        self.switch_form = self.browser.find_element_by_id('id-switch-form')
+        self.switch_input = self.browser.find_element_by_id('id-switch-input')
+        self.last_updated_all_form = self.browser.find_element_by_id('id-last-updated-all-form')
+        self.last_updated_all_input = self.browser.find_element_by_id('id-last-updated-all-input')
+        self.last_updated_temperature_form = self.browser.find_element_by_id('id-last-updated-temperature-form')
+        self.last_updated_temperature_input = self.browser.find_element_by_id('id-last-updated-temperature-input')
+        self.synchronising_form = self.browser.find_element_by_id('id-synchronising-form')
+        self.synchronising_input = self.browser.find_element_by_id('id-synchronising-input')
+        self.ambient_light_form = self.browser.find_element_by_id('id-ambient-light-form')
+        self.ambient_light_input = self.browser.find_element_by_id('id-ambient-light-input')
+        self.get_cached_contents_interval_form = self.browser.find_element_by_id('id-get-cached-contents-interval-form')
         self.get_cached_contents_interval_input = self.browser.find_element_by_id('id-get-cached-contents-interval-input')
-        self.get_cached_contents_interval_send_button = self.browser.find_element_by_id('id-get-cached-contents-interval-send-button')
 
     def test_main(self):
-        
-        # user adds a house_code via the api web page
+
+        # user goes to the api page and enters a house code
         self.post_house_code('FA-32')
 
-        # user checks the page title
+        # user then goes the rev2 emulator page to check it's there
         self.initialise_page()
         self.assertEqual(self.browser.title, "REV2 Emulator")
-        h1 = self.browser.find_element_by_tag_name("h1")
-        self.assertEqual(h1.text, "REV2 Emulator")
+        self.assertEqual(self.browser.find_element_by_tag_name("h1").text, "REV2 Emulator")
+        self.house_code_input.send_keys('FA-32')
+        # user sees the cache after the inputs
+        self.assertTrue(self.browser.find_element_by_tag_name("code"))
+        # user sees that a default of 4 seconds has been set for the cache refresh rate
+        self.assertEqual(self.get_cached_contents_interval_input.get_attribute('value'), '4')
+        self.wait_for_attribute_in_cache('house-code', 'FA-32')
 
-        # Javascript tests
+    def wait_for_attribute_in_cache(self, name, value, timeout=10):
 
-#         # user enters a new temperature
-#         self.house_code_input.send_keys('FA-32')
-#         self.room_temp_input.send_keys('23.125')
-#         self.room_temp_send_button.click()
-#         self.assertEqual(self.browser.current_url, self.server_url + '/rev2-emulator')
+        def check_variable_found(b):
+            json_response = b.find_element_by_tag_name("code").text
+            if json_response != "":
+                json_response = json.loads(json_response)
+                if name in json_response:
+                    return json_response[name] == value
 
-#         # user checks the change has had an effect in the api web page
-#         self.get_status('FA-32')
-#         json_response = self.get_json_response()
-#         self.assertEqual(json_response['content']['temperature-opentrv'], '23.125')
-
-#         # user tries again to enter a new temperature
-#         self.initialise_page()
-#         self.house_code_input.send_keys('FA-32')
-#         self.room_temp_input.send_keys('15.122')
-#         self.submit_button.click()
-#         self.assertEqual(self.browser.current_url, self.server_url + '/')
-
-#         # user checks the change has had an effect in the api web page
-#         self.get_status('FA-32')
-#         json_response = self.get_json_response()
-#         self.assertEqual(json_response['content']['temperature-opentrv'], '15.122')
-
-#         # use tries a house-code that does not exist
-#         self.initialise_page()
-#         self.house_code_input.send_keys('FA-33')
-#         self.room_temp_input.send_keys('15.122')
-#         self.submit_button.click()
-#         self.assertEqual(self.browser.current_url, self.server_url + '/rev2-emulator/')
+        timeout_msg = 'Count not find attribute: {} with val: {}'.format(name, value)
+        WebDriverWait(self.browser,timeout=timeout).until(check_variable_found, timeout_msg)

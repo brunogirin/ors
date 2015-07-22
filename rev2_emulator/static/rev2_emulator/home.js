@@ -1,285 +1,143 @@
+var timer_id;
+
+function startTimer(interval){
+    console.log("startTimer: interval: " + interval);
+    return setInterval(getCache, interval);
+}
+
 function getCache(){
     console.log("getCache");
-    var ajaxSettings = {
-	async: true,
-	complete: function(response){
-	    console.log("ajax ok");
-	    console.log(response);
-	    $("#id-cache").html(JSON.stringify(response.responseJSON.content));
-	    $("#id-cache").slideDown();
+    $("#id-cache").slideUp(function(){
+	var ajaxSettings = {
+	    async: true,
+	    complete: function(response){
+		console.log("ajax ok");
+		console.log(response);
+		$("#id-cache").html(JSON.stringify(response.responseJSON.content));
+		$("#id-cache").slideDown();
+	    }
 	}
-    }
-    $.ajax("/rev2-emulator/get-statuses", ajaxSettings);  
+	$.ajax("/rev2-emulator/get-statuses", ajaxSettings);
+    });
 }
 
 $(document).ready(function(){
     console.log("document.ready()");
 
     getCache();
+    timer_id = startTimer(4000);
+
+    $("#id-relative-humidity-form").submit(function(e){
+	e.preventDefault();
+	var val = $("#id-relative-humidity-input").val();
+	var ajaxSettings = {
+	    async: true,
+	    data: {"house-code": $("#id-house-code-input").val(), "relative-humidity": val},
+	    method: "post",
+	};
+	$.ajax("/rev2-emulator/relative-humidity", ajaxSettings);
+    });
+
+    $("#id-temperature-opentrv-form").submit(function(e){
+	e.preventDefault();
+	var val = $("#id-temperature-opentrv-input").val();
+	var ajaxSettings = {
+	    async: true,
+	    data: {"house-code": $("#id-house-code-input").val(), "temperature-opentrv": val},
+	    method: "post",
+	};
+	$.ajax("/rev2-emulator/temperature-opentrv", ajaxSettings);
+    });
+
+    $("#id-temperature-ds18b20-form").submit(function(e){
+	e.preventDefault();
+	var val = $("#id-temperature-ds18b20-input").val();
+	var ajaxSettings = {
+	    async: true,
+	    data: {"house-code": $("#id-house-code-input").val(), "temperature-ds18b20": val},
+	    method: "post",
+	};
+	$.ajax("/rev2-emulator/temperature-ds18b20", ajaxSettings);
+    });
+
+    $("#id-window-form").submit(function(e){
+	e.preventDefault();
+	var val = $("#id-window-input").val();
+	var ajaxSettings = {
+	    async: true,
+	    data: {"house-code": $("#id-house-code-input").val(), "window": val},
+	    method: "post",
+	};
+	$.ajax("/rev2-emulator/window", ajaxSettings);
+    });
+
+    $("#id-switch-form").submit(function(e){
+	e.preventDefault();
+	var checked = $("#id-switch-input").prop("checked");
+	var val = checked ? "on" : "off"
+	var ajaxSettings = {
+	    async: true,
+	    data: {"house-code": $("#id-house-code-input").val(), "switch": val},
+	    method: "post",
+	};
+	$.ajax("/rev2-emulator/switch", ajaxSettings);
+    });
+
+    $("#id-last-updated-all-form").submit(function(e){
+	e.preventDefault();
+	var val = $("#id-last-updated-all-input").val();
+	var ajaxSettings = {
+	    async: true,
+	    data: {"house-code": $("#id-house-code-input").val(), "last-updated-all": val},
+	    method: "post",
+	};
+	$.ajax("/rev2-emulator/last-updated-all", ajaxSettings);
+    });
+
+
+    $("#id-last-updated-temperature-form").submit(function(e){
+	e.preventDefault();
+	var val = $("#id-last-updated-temperature-input").val();
+	var ajaxSettings = {
+	    async: true,
+	    data: {"house-code": $("#id-house-code-input").val(), "last-updated-temperature": val},
+	    method: "post",
+	};
+	$.ajax("/rev2-emulator/last-updated-temperature", ajaxSettings);
+    });
+
+    $("#id-synchronising-form").submit(function(e){
+	e.preventDefault();
+	var val = $("#id-synchronising-input").val();
+	var ajaxSettings = {
+	    async: true,
+	    data: {"house-code": $("#id-house-code-input").val(), "synchronising": val},
+	    method: "post",
+	};
+	$.ajax("/rev2-emulator/synchronising", ajaxSettings);
+    });
+
+    $("#id-ambient-light-form").submit(function(e){
+	e.preventDefault();
+	var val = $("#id-ambient-light-input").val();
+	var ajaxSettings = {
+	    async: true,
+	    data: {"house-code": $("#id-house-code-input").val(), "ambient-light": val},
+	    method: "post",
+	};
+	$.ajax("/rev2-emulator/ambient-light", ajaxSettings);
+    });
+
+    // Get Cached Contents
+    $("#id-get-cached-contents-interval-form").submit(function(e){
+	e.preventDefault();
+	var interval = $("#id-get-cached-contents-interval-input").val() * 1000;
+	console.log("start-counter clicked: interval: " + interval);
+	clearInterval(timer_id);
+	if(interval != 0){
+	    timer_id = startTimer(interval);
+	}
+    });
     
+
 });
-
-
-// console.log("rev2_emulator: home.js");
-
-// var test;
-// var pageVisited = new Date();		
-
-// function displayStatuses(){
-//     $("code").slideUp(function(){
-// 	    var ajaxSettings = {
-// 		async: true,
-// 		complete: function(response){
-// 		    console.log("ajax ok");
-// 		    $("code").html(JSON.stringify(response.responseJSON.content));
-// 		    $("code").slideDown();
-// 		}
-// 	    }
-// 	    $.ajax("/rev2-emulator/get-statuses", ajaxSettings);
-// 	});
-// }
-
-// function startTimer(interval){
-//     console.log("startTimer: interval: " + interval);
-//     return setInterval(displayStatuses, interval);
-// }
-
-// $(document).ready(function(){
-
-// 	console.log("document ready!");
-
-// 	var house_code_input = $("#id-house-code-input");
-// 	var temperature_opentrv_input = $("#id-room-temp-input");
-// 	var temperature_opentrv_send_button = $("#id-room-temp-send-button");
-// 	var ds18b20_input = $("#id-ds18b20-temp-input");
-// 	var ds18b20_send_button = $("#id-ds18b20-temp-send-button");
-// 	var button_input = $("#id-button-input");
-// 	var button_send_button = $("#id-button-send-button");
-// 	var led_input = $("#id-led-input");
-// 	var led_send_button = $("#id-led-send-button");
-// 	var synchronising_input = $("#id-synchronising-input");
-// 	var synchronising_send_button = $("#id-synchronising-send-button");
-// 	var relative_humidity_input = $("#id-relative-humidity-input");
-// 	var relative_humidity_send_button = $("#id-relative-humidity-send-button");
-// 	var window_input = $("#id-window-input");
-// 	var window_send_button = $("#id-window-send-button");
-// 	var last_updated_input = $("#id-last-updated-input");
-// 	var last_updated_send_button = $("#id-last-updated-send-button");
-// 	var last_updated_temperatures_input = $("#id-last-updated-temperatures-input");
-// 	var last_updated_temperatures_send_button = $("#id-last-updated-temperatures-send-button");
-// 	var get_cached_contents_interval_input = $("#id-get-cached-contents-interval-input");
-// 	var get_cached_contents_interval_send_button = $("#id-get-cached-contents-interval-send-button");
-// 	var cache_output = $("code");
-
-// 	displayStatuses();
-// 	test = startTimer(4000);
-
-// 	// show cache now
-// 	$("#id-show-cache-now").click(function(event){
-// 		get_cached_contents_interval_input.val("0");
-// 		get_cached_contents_interval_send_button.click();
-// 	    });
-
-// 	// last_updated_temperatures
-// 	last_updated_temperatures_send_button.on("click", function(event){
-// 		var value = last_updated_temperatures_input.val();
-// 		var ajaxSettings = {
-// 		    async: true,
-// 		    data: {"house-code": house_code_input.val(), "last-updated-temperatures": value},
-// 		    method: "post",
-// 		};
-// 		$.ajax("/rev2-emulator/last-updated-temperatures", ajaxSettings);
-// 	    });
-
-// 	// last_updated
-// 	last_updated_send_button.on("click", function(event){
-// 		var value = last_updated_input.val();
-// 		var ajaxSettings = {
-// 		    async: true,
-// 		    data: {"house-code": house_code_input.val(), "last-updated": value},
-// 		    method: "post",
-// 		};
-// 		$.ajax("/rev2-emulator/last-updated", ajaxSettings);
-// 	    });
-
-// 	// window
-// 	window_send_button.on("click", function(event){
-// 		var value = window_input.prop("checked") ? "open" : "closed";
-// 		var ajaxSettings = {
-// 		    async: true,
-// 		    data: {"house-code": house_code_input.val(), "window": value},
-// 		    method: "post",
-// 		};
-// 		$.ajax("/rev2-emulator/window", ajaxSettings);
-// 	    });
-
-// 	// relative_humidity
-// 	relative_humidity_send_button.on("click", function(event){
-// 		var value = relative_humidity_input.val();
-// 		var ajaxSettings = {
-// 		    async: true,
-// 		    data: {"house-code": house_code_input.val(), "relative-humidity": value},
-// 		    method: "post",
-// 		};
-// 		$.ajax("/rev2-emulator/relative-humidity", ajaxSettings);
-// 	    });
-
-// 	// synchronising
-// 	synchronising_send_button.on("click", function(event){
-// 		var value = synchronising_input.prop("checked") ? "on" : "off";
-// 		var ajaxSettings = {
-// 		    async: true,
-// 		    data: {"house-code": house_code_input.val(), "synchronising": value},
-// 		    method: "post",
-// 		};
-// 		$.ajax("/rev2-emulator/synchronising", ajaxSettings);
-// 	    });
-
-// 	// led
-// 	led_send_button.on("click", function(event){
-// 		var value = led_input.val();
-// 		var ajaxSettings = {
-// 		    async: true,
-// 		    data: {"house-code": house_code_input.val(), "led": value},
-// 		    method: "post",
-// 		};
-// 		$.ajax("/rev2-emulator/led", ajaxSettings);
-// 	    });
-
-// 	// button
-// 	button_send_button.on("click", function(event){
-// 		var state = button_input.prop("checked") ? "on" : "off";
-// 		var ajaxSettings = {
-// 		    async: true,
-// 		    data: {"house-code": house_code_input.val(), "button": state},
-// 		    method: "post",
-// 		};
-// 		$.ajax("/rev2-emulator/button", ajaxSettings);
-// 	    });
-
-// 	// DS18B20 Temp
-// 	ds18b20_send_button.on("click", function(event){
-// 		var temp = ds18b20_input.val();
-// 		var ajaxSettings = {
-// 		    async: true,
-// 		    data: {"house-code": house_code_input.val(), "ds18b20-temp": temp},
-// 		    method: "post",
-// 		};
-// 		$.ajax("/rev2-emulator/ds18b20-temperature", ajaxSettings);
-// 	    });
-
-// 	// Room Temp
-// 	temperature_opentrv_send_button.on("click", function(event){
-// 		var temp = temperature_opentrv_input.val();
-// 		var ajaxSettings = {
-// 		    async: true,
-// 		    data: {"house-code": house_code_input.val(), "room-temp": temp},
-// 		    method: "post",
-// 		};
-// 		$.ajax("/rev2-emulator/temperature-opentrv", ajaxSettings);
-// 	    });
-
-// 	// Get Cached Contents
-// 	get_cached_contents_interval_send_button.on("click", function(event){
-// 		event.preventDefault();
-// 		var interval = $("#id-get-cached-contents-interval-input").val() * 1000;
-// 		console.log("start-counter clicked: interval: " + interval);
-// 		clearInterval(test);
-// 		if(interval != 0){
-// 		    test = startTimer(interval);
-// 		}
-// 	    });
-
-	
-//     });
-
-
-// // $(document).ready(function(){
-
-
-// // 	$("#id-get-cached-contents-interval-input").click(function(e){
-// // 		testClear();
-// // 	    });
-
-// // //  	get_cached_contents_interval_send_button.on("click", function(e){
-// // //  		console.log("clearing interval: " + test);
-// // //  		testClear();
-// // //  	    });
-
-// //     });
-
-
-
-// // 	console.log(house_code_input);
-// // 	console.log(temperature_opentrv_input);
-// // 	console.log(temperature_opentrv_send_button);
-// // 	console.log(ds18b20_input);
-// // 	console.log(ds18b20_send_button);
-// // 	console.log(button_input);
-// // 	console.log(button_send_button);
-// // 	console.log(led_input);
-// // 	console.log(led_send_button);
-// // 	console.log(synchronising_input);
-// // 	console.log(synchronising_send_button);
-// // 	console.log(relative_humidity_input);
-// // 	console.log(relative_humidity_send_button);
-// // 	console.log(window_input);
-// // 	console.log(window_send_button);
-// // 	console.log(last_updated_input);
-// // 	console.log(last_updated_send_button);
-// // 	console.log(last_updated_temperatures_input);
-// // 	console.log(last_updated_temperatures_send_button);
-// // 	console.log(get_cached_contents_interval_input);
-// // 	console.log(get_cached_contents_interval_send_button);
-
-	
-// // // 	var i = 0;
-// // // 	var interval = setInterval(function() {
-// // // 		$.ajax("/rev2-emulator/get-statuses", {
-// // // 			async: true,
-// // // 			complete: function(response){
-// // // 			    console.log("complete");
-// // // 			    console.log(response);
-// // // 			    console.log(response.responseJSON);
-// // // 			    cache_output.html(JSON.stringify(response.responseJSON.content));
-// // // 			},
-// // // 		    });
-// // // 	    }, 10000);
-
-// // 	var interval = 1000;
-// // 	function callback() {
-// // 	    console.log( 'callback!' );
-// // 	    return setTimeout( callback, interval );
-// // 	}
-
-// // 	timeout = callback();
-
-// // 	get_cached_contents_interval_send_button.on("click", function(e){
-// // 		clearTimeout(timeout);
-// // 	    });
-	
-// // 	var previous_timeout = undefined;
-
-// // 	get_cached_contents_interval_send_button.click(function(e){
-// // 		interval = get_cached_contents_interval_input.val();
-// // 		if(interval == 0){
-// // 		    interval = 100000;
-// // 		}
-// // 		interval = interval * 1000;
-// // 		console.log(interval);
-// // 		console.log("previous_timeout: " + previous_timeout);
-// // 		console.log("cleanInterval: " + clearInterval(previous_timeout));
-// // 		previous_timeout = callback(interval);
-// // 		console.log("new_timeout: " + previous_timeout);
-// // 	    });
-
-// // 	var interval = 1000;
-	
-// // 	function callback() {
-// // 	    console.log( 'callback!' );
-// // 	    interval -= 100; // actually this will kill your browser when goes to 0, but shows the idea
-// // 	    setTimeout( callback, interval );
-// // 	}
-	
-// // 	setTimeout( callback, interval );
-// //     });

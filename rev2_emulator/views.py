@@ -10,7 +10,7 @@ def emulator_view(request):
 
 def temperature_opentrv_view(request):
     hc = HouseCode.objects.get(code=request.POST['house-code'])
-    hc.temperature_opentrv = request.POST['room-temp']
+    hc.temperature_opentrv = request.POST['temperature-opentrv']
     hc.save()
     return JsonResponse({'status': 200, 'content': None})
 
@@ -53,6 +53,12 @@ def last_updated_all_view(request):
 def last_updated_temperature_view(request):
     hc = HouseCode.objects.get(code=request.POST['house-code'])
     hc.last_updated_temperature = request.POST['last-updated-temperature']
+    hc.save()
+    return JsonResponse({'status': 200, 'content': None})
+
+def ambient_light_view(request):
+    hc = HouseCode.objects.get(code=request.POST['house-code'])
+    hc.ambient_light = request.POST['ambient-light']
     hc.save()
     return JsonResponse({'status': 200, 'content': None})
 

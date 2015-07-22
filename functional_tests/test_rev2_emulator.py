@@ -41,21 +41,63 @@ class Rev2EmulatorTest(FunctionalTest):
         self.initialise_page()
         self.assertEqual(self.browser.title, "REV2 Emulator")
         self.assertEqual(self.browser.find_element_by_tag_name("h1").text, "REV2 Emulator")
-        self.house_code_input.send_keys('FA-32')
         # user sees the cache after the inputs
         self.assertTrue(self.browser.find_element_by_tag_name("code"))
         # user sees that a default of 4 seconds has been set for the cache refresh rate
         self.assertEqual(self.get_cached_contents_interval_input.get_attribute('value'), '4')
-        self.wait_for_attribute_in_cache('house-code', 'FA-32')
-
-    def wait_for_attribute_in_cache(self, name, value, timeout=10):
+        self.wait_for_attribute_in_cache('FA-32', 'house-code', 'FA-32')
+        # user then updates the temperature-opentrv
+        self.house_code_input.send_keys('FA-32')
+        # self.temperature_opentrv_input.send_keys('23.233\n')
+        # # # user then waits for the temperature to update
+        # self.wait_for_attribute_in_cache('FA-32', 'temperature-opentrv', '23.233')
+        # # user updates the rest of the variables
+        # # relative_humidity
+        # self.relative_humidity_input.send_keys('50\n')
+        # self.wait_for_attribute_in_cache('FA-32', 'relative-humidity', 50)
+        # # temperature_ds18b20
+        # self.temperature_ds18b20_input.send_keys('25.333\n')
+        # self.wait_for_attribute_in_cache('FA-32', 'temperature-ds18b20', '25.333')
+        # # window
+        # options = self.window_input.find_elements_by_tag_name("option")
+        # for option in options:
+        #     if option.text == "Open":
+        #         option.click()
+        # self.window_form.submit()
+        # self.wait_for_attribute_in_cache('FA-32', 'window', 'open')
+        # switch
+        self.switch_input.click()
+        self.switch_form.submit()
+        self.wait_for_attribute_in_cache('FA-32', 'switch', 'on')
+        # last-updated-all
+        self.last_updated_all_input.send_keys("2015-07-10\n")
+        self.last_updated_all_form.submit()
+        self.wait_for_attribute_in_cache('FA-32', 'last-updated-all', '2015-07-10T00:00:00Z')
+        # last-updated-temperature
+        self.last_updated_temperature_input.send_keys("2015-07-10\n")
+        self.last_updated_temperature_form.submit()
+        self.wait_for_attribute_in_cache('FA-32', 'last-updated-temperature', '2015-07-10T00:00:00Z')
+        # synchronising
+        options = self.synchronising_input.find_elements_by_tag_name("option")
+        for option in options:
+            if option.text == "On":
+                option.click()
+        self.synchronising_form.submit()
+        self.wait_for_attribute_in_cache('FA-32', 'synchronising', 'on')
+        # ambient light
+        self.ambient_light_input.send_keys('50\n')
+        self.wait_for_attribute_in_cache('FA-32', 'ambient-light', 50)
+        
+    def wait_for_attribute_in_cache(self, code, name, value, timeout=10):
 
         def check_variable_found(b):
-            json_response = b.find_element_by_tag_name("code").text
+            json_response = b.find_element_by_id("id-cache").text
             if json_response != "":
                 json_response = json.loads(json_response)
-                if name in json_response:
-                    return json_response[name] == value
+                for hc in json_response:
+                    if hc['house-code'] == code and name in hc:
+                            return hc[name] == value
+                return False
 
         timeout_msg = 'Count not find attribute: {} with val: {}'.format(name, value)
         WebDriverWait(self.browser,timeout=timeout).until(check_variable_found, timeout_msg)

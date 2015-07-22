@@ -54,7 +54,7 @@ class TemperatureOpentrvViewTest(TestCase):
     
     def test_post_updates(self):
         hc = HouseCode.objects.create(code="FA-32")
-        response = self.client.post('/rev2-emulator/temperature-opentrv', data={'house-code': 'FA-32', 'room-temp': '10.123'})
+        response = self.client.post('/rev2-emulator/temperature-opentrv', data={'house-code': 'FA-32', 'temperature-opentrv': '10.123'})
         hc = HouseCode.objects.first()
         self.assertEqual(hc.temperature_opentrv, '10.123')
 

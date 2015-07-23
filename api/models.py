@@ -72,6 +72,9 @@ class HouseCode(models.Model):
     def clean(self, *args, **kwargs):
         if not self.is_valid_format():
             raise ValidationError({'code': INVALID_HOUSE_CODE_MSG.format(self.code)})
+        if self.relative_humidity != None:
+            if self.relative_humidity not in VALID_RELATIVE_HUMIDITIES:
+                raise ValidationError({'relative_humidity': INVALID_RELATIVE_HUMIDITY_MSG.format(self.relative_humidity)})
         if not self.temperature_is_valid(self.temperature_opentrv):
             raise ValidationError({'temperature_opentrv': INVALID_TEMPERATURE_OPENTRV_MSG.format(self.temperature_opentrv)})
         if not self.temperature_is_valid(self.temperature_ds18b20):

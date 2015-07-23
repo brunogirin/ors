@@ -224,6 +224,13 @@ class Rev2EmulatorTest(FunctionalTest):
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
         self.assertIn(api.models.INVALID_AMBIENT_LIGHT_VALUE_MSG.format('33333333'), json_response['errors'])
 
+        # user inputs an invalid relative_humidity
+        self.relative_humidity_input.send_keys('111\n')
+        response_code_element = WebDriverWait(self.browser, timeout=30).until(visibility_of_element_located((By.ID, "id-response-code")))
+        json_response = json.loads(response_code_element.text)
+        self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
+        self.assertIn(api.models.INVALID_RELATIVE_HUMIDITY_MSG.format('111'), json_response['errors'])
+        
     def initialise_page(self):
         self.browser.get(self.server_url + '/rev2-emulator')
         self.house_code_input = self.browser.find_element_by_id('id-house-code-input')

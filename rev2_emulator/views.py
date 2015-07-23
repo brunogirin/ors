@@ -20,7 +20,7 @@ def relative_humidity_view(request):
             hc.save()
         except ValidationError as e:
             response['status'] = INVALID_INPUT_STATUS
-            response['errors'] = e.message_dict['relative-humidity']
+            response['errors'] = e.message_dict['relative_humidity']
     except HouseCode.DoesNotExist:
         response['status'] = INVALID_INPUT_STATUS
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(request.POST['house-code'])]

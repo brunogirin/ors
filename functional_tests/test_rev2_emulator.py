@@ -6,7 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.expected_conditions import visibility_of_element_located
 from selenium.webdriver.common.by import By
 from .base import FunctionalTest
-from api.views import INVALID_INPUT_STATUS, VALID_COLOURS, VALID_FLASH, INVALID_HOUSE_CODE_MSG
+from api.views import INVALID_INPUT_STATUS, VALID_LED_COLOURS, VALID_LED_STATES, VALID_LED_REPEAT_INTERVALS, INVALID_HOUSE_CODE_MSG
 from api.models import HOUSE_CODE_NOT_FOUND_MSG, HouseCode
 
 class Rev2EmulatorTest(FunctionalTest):

@@ -6,7 +6,8 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from .base import FunctionalTest
-from api.views import INVALID_INPUT_STATUS, VALID_COLOURS, VALID_FLASH, INVALID_HOUSE_CODE_MSG
+from api.views import INVALID_INPUT_STATUS, INVALID_HOUSE_CODE_MSG, INVALID_LED_COLOUR_MSG
+from api.views import INVALID_LED_STATE_MSG, INVALID_LED_REPEAT_INTERVAL_MSG
 from api.models import HOUSE_CODE_NOT_FOUND_MSG, HouseCode
 
 class StatusTest(FunctionalTest):
@@ -64,174 +65,59 @@ class StatusTest(FunctionalTest):
         expected_content['ambient-light'] = None
         self.assertEqual(json_response['status'], 200)
         self.assertEqual(json_response['content'], expected_content)
-        
-        # # the user updates the temperature-opentrv
-        # self.browser.get(self.server_url + '/rev2-emulator')
-        # house_code_input = self.browser.find_element_by_id('id-house-code-input')
-        # house_code_input.send_keys('FA-32')
-        # temperature_opentrv_input = self.browser.find_element_by_id('id-temperature-opentrv-input')
-        # temperature_opentrv_input.send_keys('25\n')
-        # # the user waits until the change shows in the cache field below
-        # def ajax_success(b):
-        #     page_source = b.page_source
-        #     json_response = b.find_element_by_tag_name("code")
-        #     json_response = json.loads(json_response)
-        #     json_response['temperature-opentrv'] == '25'
-        # WebDriverWait(
-        #     self.browser,
-        #     timeout=30).until(
-        #         ajax_success,
-        #         'Could not find element with id {}. Page text was {}'.format(
-        #             element_id, self.browser.find_element_by_tag_name('body').text
-        #         )
-        #     )
-        # # the user goes back to the api page
-        # self.browser.get(self.server_url)
-        # # the user gets the status for the house-code
-        # self.initialise_page()
-        # self.house_code_input.send_keys('FA-32')
-        # self.button.click()
-        # json_response = self.get_json_response()
-        # self.assertEqual(json_resposne['status'], 200)
-        # self.assertEqual(json_response['content']['temperature-opentrv'], '25')
 
 class LedTest(FunctionalTest):
-    '''
-    colour: colour of the LED
-    flash: how many seconds the LED should flash for
-    '''
     
-    class PostTestParameterSet(object):
-
-        __slots__ = ['inputs', 'expected_errors', 'expected_status_code', 'expected_content']
-
-        class Inputs(object):
-            __slots__ = ['colour', 'flash', 'house_code']
-
-        def __init__(self, inputs=None, expected_errors=None, expected_status_code=None, expected_content=None):
-            self.inputs = inputs if inputs != None else self.Inputs()
-            self.expected_errors = expected_errors
-            self.expected_status_code = expected_status_code
-            self.expected_content = expected_content
-
-    def run_input_validation_test(self, parameter_set):
-        self.initialise_page()
-        self.house_code_input.send_keys(parameter_set.inputs.house_code)
-        self.colour_input.send_keys(parameter_set.inputs.colour)
-        self.flash_input.send_keys(parameter_set.inputs.flash)
-        self.button.click()
-        json_response = self.get_json_response()
-        self.assertEqual(json_response['status'], parameter_set.expected_status_code)
-        try:
-            errors = json_response['errors']
-        except KeyError:
-            errors = []
-        for error in parameter_set.expected_errors:
-            self.assertIn(error, errors)
-        self.assertEqual(json_response['content'], parameter_set.expected_content)
-
     def initialise_page(self):
         self.browser.get(self.server_url)
         self.section = self.browser.find_element_by_id("id-led-section")
+        self.form = self.section.find_element_by_tag_name('form')
         self.house_code_input = self.section.find_element_by_css_selector('input#id-house-code-input')
         self.colour_input = self.section.find_element_by_css_selector("input#id-colour-input")
-        self.flash_input = self.section.find_element_by_css_selector("input#id-flash-input")
-        self.button = self.section.find_element_by_css_selector('input[type="submit"]')
-
+        self.state_input = self.section.find_element_by_id('id-state-input')
+        self.repeat_interval_input = self.section.find_element_by_id('id-repeat-interval-input')
+        
     def test_main(self):
+        # user adds a house code to the database
+        self.post_house_code('FA-32')
+
+        # user reloads the api page
         self.initialise_page()
         h2 = self.section.find_element_by_tag_name('h2')
         self.assertEqual(h2.text, 'POST /api/led/<house-code>')
-
-        section = self.browser.find_element_by_id("id-post-house-codes-section")
-        input = section.find_element_by_id("id-house-codes-input")
-        input.send_keys("FA-32")
-        button = section.find_element_by_css_selector('input[type="submit"]')
-        button.click()
-
         # user inputs valid input
-        self.initialise_page()
-        
-        # user inputs valid input
-        x = self.PostTestParameterSet()
-        x.inputs.house_code = 'FA-32'
-        x.inputs.colour = '0'
-        x.inputs.flash = '1'
-        x.expected_errors = []
-        x.expected_status_code = 200
-        x.expected_content = None
-        self.run_input_validation_test(x)
+        self.house_code_input.send_keys('FA-32')
+        self.colour_input.send_keys('0')
+        self.state_input.send_keys('0')
+        self.repeat_interval_input.send_keys('100')
+        self.form.submit()
         self.assertEqual(self.browser.current_url, self.server_url + '/api/led/FA-32')
+        json_response = self.get_json_response()
+        self.assertEqual(json_response['status'], 200)
+        self.assertEqual(json_response['content'], None)
+        
+        # TODO: User needs to be able to see the result
 
+        # user reloads api page
         # user inputs non existent house code
-        x = self.PostTestParameterSet()
-        x.inputs.house_code = 'E2-E1'
-        x.inputs.colour = '0'
-        x.inputs.flash = '1'
-        x.expected_errors = [HOUSE_CODE_NOT_FOUND_MSG.format('E2-E1')]
-        x.expected_status_code = INVALID_INPUT_STATUS
-        x.expected_content = None
-        self.run_input_validation_test(x)
+        self.initialise_page()
+        self.house_code_input.send_keys('FA-33')
+        self.form.submit()
+        json_response = self.get_json_response()
+        self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
+        self.assertEqual(json_response['errors'], [HOUSE_CODE_NOT_FOUND_MSG.format('FA-33')])
 
-        # user inputs empty values
-        x = self.PostTestParameterSet()
-        x.inputs.house_code = 'FA-32'
-        x.inputs.colour = ''
-        x.inputs.flash = ''
-        x.expected_errors =  ['Invalid input for parameter: colour. Received: , expected: [0, 1, 2, 3]', 
-                              'Invalid input for parameter: flash. Received: , expected: [1, 2, 4, 8, 16]']
-        x.expected_status_code = 300
-        x.expected_content = None
-        self.run_input_validation_test(x)
-
-        # user inputs alphabetic values
-        x = self.PostTestParameterSet()
-        x.inputs.house_code = 'FA-32'
-        x.inputs.colour = 'a'
-        x.inputs.flash = 'b'
-        x.expected_errors =  ['Invalid input for parameter: colour. Received: a, expected: [0, 1, 2, 3]', 
-                              'Invalid input for parameter: flash. Received: b, expected: [1, 2, 4, 8, 16]']
-        x.expected_status_code = 300
-        x.expected_content = None
-        self.run_input_validation_test(x)
-
-        # user enters values outside of range
-        x = self.PostTestParameterSet()
-        x.inputs.house_code = 'FA-32'
-        x.inputs.colour = '5'
-        x.inputs.flash = '3'
-        x.expected_errors =  ['Invalid input for parameter: colour. Received: 5, expected: [0, 1, 2, 3]', 
-                              'Invalid input for parameter: flash. Received: 3, expected: [1, 2, 4, 8, 16]']
-        x.expected_status_code = 300
-        x.expected_content = None
-        self.run_input_validation_test(x)
+        # user inputs empty string for the colour
+        self.initialise_page()
+        self.house_code_input.send_keys('FA-32')
+        self.form.submit()
+        json_response = self.get_json_response()
+        self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
+        self.assertIn(INVALID_LED_COLOUR_MSG.format(''), json_response['errors'])
+        self.assertIn(INVALID_LED_STATE_MSG.format(''), json_response['errors'])
+        self.assertIn(INVALID_LED_REPEAT_INTERVAL_MSG.format(''), json_response['errors'])
 
 class DebugTest(FunctionalTest):
-
-    # class PostTestParameterSet(object):
-
-    #      __slots__ = ['inputs', 'expected_errors', 'expected_status_code', 'expected_content']
-    #      class Inputs(object):
-    #          __slots__ = ['state_input']
-    #      def __init__(self, inputs=None, expected_errors=None, expected_status_code=None, expected_content=None):
-    #          self.inputs = inputs if inputs != None else self.Inputs()
-    #          self.expected_errors = expected_errors
-    #          self.expected_status_code = expected_status_code
-    #          self.expected_content = expected_content
-
-    # def run_input_validation_test(self, parameter_set):
-    #      self.initialise_page()
-    #      self.state_input.send_keys(parameter_set.inputs.state_input)
-    #      self.post_button.click()
-    #      json_response = self.get_json_response()
-    #      self.assertEqual(json_response['status'], parameter_set.expected_status_code)
-    #      try:
-    #          errors = json_response['errors']
-    #      except KeyError:
-    #          errors = []
-    #      for error in parameter_set.expected_errors:
-    #          self.assertIn(error, errors)
-    #      self.assertEqual(json_response['content'], parameter_set.expected_content)
 
     def initialise_page(self):
         self.browser.get(self.server_url)

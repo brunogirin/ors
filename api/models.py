@@ -3,8 +3,6 @@ import datetime
 from django.db import models
 from django.core.exceptions import ValidationError
 
-VALID_COLOURS = range(4)
-VALID_FLASH = [1, 2, 4, 8, 16]
 VALID_RELATIVE_HUMIDITIES = range(101)
 VALID_WINDOW_STATES = ['open', 'closed']
 VALID_SWITCH_STATES = ['on', 'off']
@@ -128,6 +126,6 @@ class Debug(models.Model):
     # state = models.CharField(max_length=3, default="off")
     pass
 
-class Led(models.Model):
-    colour = models.IntegerField(choices=[(i, i) for i in VALID_COLOURS])
-    flash = models.IntegerField(choices=[(i, i) for i in VALID_FLASH])
+# class Led(models.Model):
+#     colour = models.IntegerField(choices=[(i, i) for i in VALID_COLOURS])
+#     flash = models.IntegerField(choices=[(i, i) for i in VALID_FLASH])

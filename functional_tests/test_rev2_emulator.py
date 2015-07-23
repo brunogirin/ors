@@ -198,7 +198,6 @@ class Rev2EmulatorTest(FunctionalTest):
         # user inputs an invalid last-updated-all date
         self.last_updated_all_input.send_keys('invalid date\n')
         response_code_element = WebDriverWait(self.browser, timeout=30).until(visibility_of_element_located((By.ID, 'id-response-code')))
-        print response_code_element
         json_response = json.loads(response_code_element.text)
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
         self.assertIn(api.models.INVALID_LAST_UPDATED_ALL_MSG.format('invalid date'), json_response['errors'])

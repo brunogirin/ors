@@ -99,7 +99,6 @@ def last_updated_all_view(request):
             hc.full_clean()
             hc.save()
         except ValidationError as e:
-            print e
             response['status'] = INVALID_INPUT_STATUS
             response['errors'] = e.message_dict['last_updated_all']
     except HouseCode.DoesNotExist:

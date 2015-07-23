@@ -249,52 +249,13 @@ class DebugTest(FunctionalTest):
         h2 = self.section.find_element_by_tag_name('h2')
         self.assertEqual(h2.text, '/api/debug/<house code>')
 
+        # user turns on the debugging
         self.house_code_input.send_keys('FA-32')
         self.form.submit()
-        self.assertEqual(self.browser.current_url, self.server_url + '/api/debug')
+        self.assertEqual(self.browser.current_url, self.server_url + '/api/debug/FA-32')
 
-        # user checks input with /api/debug GET
-        self.browser.get(self.server_url + '/api/debug')
-        json_response = self.get_json_response()
-        self.assertEqual(json_response['status'], 200)
-        self.assertEqual(json_response['content'], 'on')
-
-        # user turns off debugging
-        x = self.PostTestParameterSet()
-        x.inputs.state_input = 'off'
-        x.expected_errors = []
-        x.expected_status_code = 200
-        x.expected_content = None
-        self.run_input_validation_test(x)
+        # TODO: User needs to be able to see the changes from turning debug mode on
         
-        # user checks input with /api/debug GET
-        self.browser.get(self.server_url + '/api/debug')
-        json_response = self.get_json_response()
-        self.assertEqual(json_response['status'], 200)
-        self.assertEqual(json_response['content'], 'off')
-
-        # user enters empty parameter
-        x = self.PostTestParameterSet()
-        x.inputs.state_input = ''
-        x.expected_errors = ['Invalid input for parameter: state. Received: , expected: on/off']
-        x.expected_status_code = INVALID_INPUT_STATUS
-        x.expected_content = None
-        self.run_input_validation_test(x)
-
-        # user checks input with /api/debug GET
-        self.browser.get(self.server_url + '/api/debug')
-        json_response = self.get_json_response()
-        self.assertEqual(json_response['status'], 200)
-        self.assertEqual(json_response['content'], 'off')
-
-        # user enters invalid parameter
-        x = self.PostTestParameterSet()
-        x.inputs.state_input = 'ON'
-        x.expected_errors = ['Invalid input for parameter: state. Received: ON, expected: on/off']
-        x.expected_status_code = INVALID_INPUT_STATUS
-        x.expected_content = None
-        self.run_input_validation_test(x)
-
 class ValveTest(FunctionalTest):
 
     class TestParameterSet(object):

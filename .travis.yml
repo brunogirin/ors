@@ -10,3 +10,10 @@ install:
   - "pip install selenium"
 # command to run tests
 script: ./run-tests.sh
+notifications:
+  email:
+    recipients:
+      - voong.david@gmail.com 
+      - mark@teos.co.uk
+    on_success: change
+    on_failure: always

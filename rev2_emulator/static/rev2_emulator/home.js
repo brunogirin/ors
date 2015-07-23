@@ -41,7 +41,16 @@ $(document).ready(function(){
 	    async: true,
 	    data: {"house-code": $("#id-house-code-input").val(), "relative-humidity": val},
 	    method: "post",
+	    complete: function(response){
+		responseCode.html(JSON.stringify(response.responseJSON));
+		responseCode.css("visibility", "visible");
+		responseCode.slideDown();
+	    },
 	};
+	responseCode.css("visibility", "hidden");
+	responseCode.hide();
+	responseCode.empty();
+	$.ajax("/rev2-emulator/temperature-opentrv", ajaxSettings);
 	$.ajax("/rev2-emulator/relative-humidity", ajaxSettings);
     });
 
@@ -96,6 +105,9 @@ $(document).ready(function(){
 	    },
 	    method: "post",
 	};
+	responseCode.css("visibility", "hidden");
+	responseCode.hide();
+	responseCode.empty();
 	$.ajax("/rev2-emulator/window", ajaxSettings);
     });
 

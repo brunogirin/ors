@@ -339,7 +339,7 @@ class ApiHouseCodesTest(ApiViewTest):
     def test_invalid_format(self):
         response = self.client.post("/api/house-codes", data={"house-codes": "WX-YZ"})
         response = json.loads(response.content)
-        self.assertEqual(response['errors'], ["Invalid house-code. Recieved: WX-YZ, expected XX-XX where XX are uppercase hex numbers"])
+        self.assertEqual(response['errors'], ['Invalid input for "house-code". Recieved: WX-YZ, expected XX-XX where XX are uppercase hex numbers'])
         self.assertEqual(response['content'], [])
 
     def test_POST_blank_does_not_save(self):
@@ -349,7 +349,7 @@ class ApiHouseCodesTest(ApiViewTest):
     def test_POST_blank_returns_error(self):
         response = json.loads(self.client.post("/api/house-codes", data={"house-codes": ""}).content)
         self.assertIn("errors", response)
-        self.assertIn("Invalid house-code. Recieved: , expected XX-XX where XX are uppercase hex numbers", response["errors"])
+        self.assertIn('Invalid input for "house-code". Recieved: , expected XX-XX where XX are uppercase hex numbers', response["errors"])
 
     def test_POST_saves_a_house_code(self):
         response = self.client.post("/api/house-codes", data={"house-codes": "FA-32"})

@@ -13,8 +13,13 @@ function getCache(){
 	    complete: function(response){
 		console.log("ajax ok");
 		console.log(response);
-		$("#id-cache").html(JSON.stringify(response.responseJSON.content));
-		$("#id-cache").slideDown();
+		if(response.responseJSON.content != ""){
+		    $("#id-cache").html(JSON.stringify(response.responseJSON.content));
+		    $("#id-cache").slideDown();
+		} else {
+		    $("#id-cache").html("empty");
+		    $("#id-cache").slideDown();
+		}
 	    }
 	}
 	$.ajax("/rev2-emulator/get-statuses", ajaxSettings);
@@ -23,6 +28,8 @@ function getCache(){
 
 $(document).ready(function(){
     console.log("document.ready()");
+    var responseSection = $("#id-response-section");
+    var responseCode = responseSection.find("code");
 
     getCache();
     timer_id = startTimer(4000);
@@ -45,7 +52,15 @@ $(document).ready(function(){
 	    async: true,
 	    data: {"house-code": $("#id-house-code-input").val(), "temperature-opentrv": val},
 	    method: "post",
+	    complete: function(response){
+		responseCode.html(JSON.stringify(response.responseJSON));
+		responseCode.css("visibility", "visible");
+		responseCode.slideDown();
+	    },
 	};
+	responseCode.css("visibility", "hidden");
+	responseCode.hide();
+	responseCode.empty();
 	$.ajax("/rev2-emulator/temperature-opentrv", ajaxSettings);
     });
 
@@ -56,7 +71,15 @@ $(document).ready(function(){
 	    async: true,
 	    data: {"house-code": $("#id-house-code-input").val(), "temperature-ds18b20": val},
 	    method: "post",
+	    complete: function(response){
+		responseCode.html(JSON.stringify(response.responseJSON));
+		responseCode.css("visibility", "visible");
+		responseCode.slideDown();
+	    },
 	};
+	responseCode.css("visibility", "hidden");
+	responseCode.hide();
+	responseCode.empty();
 	$.ajax("/rev2-emulator/temperature-ds18b20", ajaxSettings);
     });
 
@@ -66,6 +89,11 @@ $(document).ready(function(){
 	var ajaxSettings = {
 	    async: true,
 	    data: {"house-code": $("#id-house-code-input").val(), "window": val},
+	    complete: function(response){
+		responseCode.html(JSON.stringify(response.responseJSON));
+		responseCode.css("visibility", "visible");
+		responseCode.slideDown();
+	    },
 	    method: "post",
 	};
 	$.ajax("/rev2-emulator/window", ajaxSettings);
@@ -73,13 +101,20 @@ $(document).ready(function(){
 
     $("#id-switch-form").submit(function(e){
 	e.preventDefault();
-	var checked = $("#id-switch-input").prop("checked");
-	var val = checked ? "on" : "off"
+	var val = $("#id-switch-input").val();
 	var ajaxSettings = {
 	    async: true,
 	    data: {"house-code": $("#id-house-code-input").val(), "switch": val},
 	    method: "post",
+	    complete: function(response){
+		responseCode.html(JSON.stringify(response.responseJSON));
+		responseCode.css("visibility", "visible");
+		responseCode.slideDown();
+	    },
 	};
+	responseCode.css("visibility", "hidden");
+	responseCode.hide();
+	responseCode.empty();
 	$.ajax("/rev2-emulator/switch", ajaxSettings);
     });
 
@@ -90,7 +125,15 @@ $(document).ready(function(){
 	    async: true,
 	    data: {"house-code": $("#id-house-code-input").val(), "last-updated-all": val},
 	    method: "post",
+	    complete: function(response){
+		responseCode.html(JSON.stringify(response.responseJSON));
+		responseCode.css("visibility", "visible");
+		responseCode.slideDown();
+	    },
 	};
+	responseCode.css("visibility", "hidden");
+	responseCode.hide();
+	responseCode.empty();
 	$.ajax("/rev2-emulator/last-updated-all", ajaxSettings);
     });
 
@@ -102,7 +145,15 @@ $(document).ready(function(){
 	    async: true,
 	    data: {"house-code": $("#id-house-code-input").val(), "last-updated-temperature": val},
 	    method: "post",
+	    complete: function(response){
+		responseCode.html(JSON.stringify(response.responseJSON));
+		responseCode.css("visibility", "visible");
+		responseCode.slideDown();
+	    },
 	};
+	responseCode.css("visibility", "hidden");
+	responseCode.hide();
+	responseCode.empty();
 	$.ajax("/rev2-emulator/last-updated-temperature", ajaxSettings);
     });
 
@@ -113,7 +164,15 @@ $(document).ready(function(){
 	    async: true,
 	    data: {"house-code": $("#id-house-code-input").val(), "synchronising": val},
 	    method: "post",
+	    complete: function(response){
+		responseCode.html(JSON.stringify(response.responseJSON));
+		responseCode.css("visibility", "visible");
+		responseCode.slideDown();
+	    },
 	};
+	responseCode.css("visibility", "hidden");
+	responseCode.hide();
+	responseCode.empty();
 	$.ajax("/rev2-emulator/synchronising", ajaxSettings);
     });
 
@@ -124,7 +183,15 @@ $(document).ready(function(){
 	    async: true,
 	    data: {"house-code": $("#id-house-code-input").val(), "ambient-light": val},
 	    method: "post",
+	    complete: function(response){
+		responseCode.html(JSON.stringify(response.responseJSON));
+		responseCode.css("visibility", "visible");
+		responseCode.slideDown();
+	    },
 	};
+	responseCode.css("visibility", "hidden");
+	responseCode.hide();
+	responseCode.empty();
 	$.ajax("/rev2-emulator/ambient-light", ajaxSettings);
     });
 

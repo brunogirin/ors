@@ -572,8 +572,9 @@ class HouseCodeTest(FunctionalTest):
         (section, input, button) = self.get_post_house_codes_tags()
         input.send_keys('WX-YZ')
         button.click()
+        json_response = json.loads(self.browser.find_element_by_tag_name("pre").text)
         self.assertIn('"content": []', self.browser.page_source)
-        self.assertIn('"errors": ["Invalid house-code. Recieved: WX-YZ, expected XX-XX where XX are uppercase hex numbers"]', self.browser.page_source)
+        self.assertEqual(json_response['errors'], ['Invalid input for "house-code". Recieved: WX-YZ, expected XX-XX where XX are uppercase hex numbers'])
 
         # user enters the same house code twice, api should overwrite
         self.browser.get(self.server_url)

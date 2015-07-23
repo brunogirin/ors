@@ -5,6 +5,36 @@ from api.models import HouseCode
 
 class HouseCodeTests(TestCase):
 
+    def test_invalid_input_for_temperature_ds18b20(self):
+        hc = HouseCode.objects.create(code='FA-32')
+        hc.temperature_ds18b20 = 'asdf'
+        with self.assertRaises(ValidationError) as e:
+            hc.full_clean()
+            hc.save()
+        hc.temperature_ds18b20 = '23.3333'
+        with self.assertRaises(ValidationError) as e:
+            hc.full_clean()
+            hc.save()
+        hc.temperature_ds18b20 = '100.0'
+        with self.assertRaises(ValidationError) as e:
+            hc.full_clean()
+            hc.save()
+
+    def test_invalid_input_for_temperature_opentrv(self):
+        hc = HouseCode.objects.create(code='FA-32')
+        hc.temperature_opentrv = 'asdf'
+        with self.assertRaises(ValidationError) as e:
+            hc.full_clean()
+            hc.save()
+        hc.temperature_opentrv = '23.3333'
+        with self.assertRaises(ValidationError) as e:
+            hc.full_clean()
+            hc.save()
+        hc.temperature_opentrv = '100.0'
+        with self.assertRaises(ValidationError) as e:
+            hc.full_clean()
+            hc.save()
+
     def test_duplicates_throw_validation_error(self):
         HouseCode.objects.create(code="housecode1")
         house_code = HouseCode(code="housecode1")

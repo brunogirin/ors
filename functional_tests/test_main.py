@@ -140,6 +140,13 @@ class DebugTest(FunctionalTest):
         self.form.submit()
         self.assertEqual(self.browser.current_url, self.server_url + '/api/debug/FA-32')
 
+        # user provides a house code that doesn't exist
+        self.initialise_page()
+        self.form.submit()
+        json_response = self.get_json_response()
+        self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
+        self.assertEqual(json_response['errors'], [HOUSE_CODE_NOT_FOUND_MSG.format('')])
+        
         # TODO: User needs to be able to see the changes from turning debug mode on
         
 class ValveTest(FunctionalTest):

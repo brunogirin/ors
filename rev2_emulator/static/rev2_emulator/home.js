@@ -50,7 +50,6 @@ $(document).ready(function(){
 	responseCode.css("visibility", "hidden");
 	responseCode.hide();
 	responseCode.empty();
-	$.ajax("/rev2-emulator/temperature-opentrv", ajaxSettings);
 	$.ajax("/rev2-emulator/relative-humidity", ajaxSettings);
     });
 

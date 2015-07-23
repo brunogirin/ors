@@ -72,25 +72,25 @@ def led_view(request, house_code):
 
     return JsonResponse(response)
 
-def debug_view(request):
+def debug_view(request, house_code):
     response = {'status': 200, 'content': None}
-    debug = Debug.objects.first()
-    if debug == None:    
-        debug = Debug.objects.create(state="off")
-    if request.method == "POST":
-        try:
-            state = request.POST['state']
-            if state not in ['on', 'off']:
-                response['errors'] = ['Invalid input for parameter: state. Received: {}, expected: on/off'.format(state)]
-                response['status'] = INVALID_INPUT_STATUS
-            else:
-                debug.state = state
-                debug.save()
-        except MultiValueDictKeyError:
-            response['errors'] = ['Required input parameter: state']
-            response['status'] = INVALID_INPUT_STATUS
-    else:
-        response['content'] = debug.state
+    # debug = Debug.objects.first()
+    # if debug == None:    
+    #     debug = Debug.objects.create(state="off")
+    # if request.method == "POST":
+    #     try:
+    #         state = request.POST['state']
+    #         if state not in ['on', 'off']:
+    #             response['errors'] = ['Invalid input for parameter: state. Received: {}, expected: on/off'.format(state)]
+    #             response['status'] = INVALID_INPUT_STATUS
+    #         else:
+    #             debug.state = state
+    #             debug.save()
+    #     except MultiValueDictKeyError:
+    #         response['errors'] = ['Required input parameter: state']
+    #         response['status'] = INVALID_INPUT_STATUS
+    # else:
+    #     response['content'] = debug.state
     return JsonResponse(response)
 
 def api_documentation(request):
@@ -174,41 +174,6 @@ def valve_view(request, house_code):
     except MultiValueDictKeyError:
         errors.append('Required input parameter: open_input')
         response['status'] = INVALID_INPUT_STATUS
-
-    try:
-        min_temp = data['min_temp']
-        min_temp = int(min_temp)
-        if min_temp < 7 or min_temp > 28:
-            raise ValueError()
-    except ValueError:
-        errors.append('Invalid input for parameter: min_temp. Received: {}, expected: 7-28'.format(min_temp))
-        response['status'] = INVALID_INPUT_STATUS
-    except MultiValueDictKeyError:
-        errors.append('Required input parameter: min_temp')
-        response['status'] = INVALID_INPUT_STATUS
-    
-    try:
-        max_temp = data['max_temp']
-        max_temp = int(max_temp)
-        if max_temp < 7 or max_temp > 28:
-            raise ValueError()
-    except ValueError:
-        errors.append('Invalid input for parameter: max_temp. Received: {}, expected: 7-28'.format(max_temp))
-        response['status'] = INVALID_INPUT_STATUS
-    except MultiValueDictKeyError:
-        errors.append('Required input parameter: max_temp')
-        response['status'] = INVALID_INPUT_STATUS
-
-    try:
-        min_temp = int(data['min_temp'])
-        max_temp = int(data['max_temp'])
-        if max_temp <= min_temp:
-            errors.append("Invalid input for parameter: max_temp. max_temp ({}) must be greater than min_temp ({})".format(max_temp, min_temp))
-            response['status'] = INVALID_INPUT_STATUS
-    except ValueError:
-        pass
-    except MultiValueDictKeyError:
-        pass
 
     if len(errors):
         response['errors'] = errors

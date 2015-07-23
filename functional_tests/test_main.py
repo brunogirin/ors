@@ -208,52 +208,49 @@ class LedTest(FunctionalTest):
 
 class DebugTest(FunctionalTest):
 
-    class PostTestParameterSet(object):
+    # class PostTestParameterSet(object):
 
-         __slots__ = ['inputs', 'expected_errors', 'expected_status_code', 'expected_content']
-         class Inputs(object):
-             __slots__ = ['state_input']
-         def __init__(self, inputs=None, expected_errors=None, expected_status_code=None, expected_content=None):
-             self.inputs = inputs if inputs != None else self.Inputs()
-             self.expected_errors = expected_errors
-             self.expected_status_code = expected_status_code
-             self.expected_content = expected_content
+    #      __slots__ = ['inputs', 'expected_errors', 'expected_status_code', 'expected_content']
+    #      class Inputs(object):
+    #          __slots__ = ['state_input']
+    #      def __init__(self, inputs=None, expected_errors=None, expected_status_code=None, expected_content=None):
+    #          self.inputs = inputs if inputs != None else self.Inputs()
+    #          self.expected_errors = expected_errors
+    #          self.expected_status_code = expected_status_code
+    #          self.expected_content = expected_content
 
-    def run_input_validation_test(self, parameter_set):
-         self.initialise_page()
-         self.state_input.send_keys(parameter_set.inputs.state_input)
-         self.post_button.click()
-         json_response = self.get_json_response()
-         self.assertEqual(json_response['status'], parameter_set.expected_status_code)
-         try:
-             errors = json_response['errors']
-         except KeyError:
-             errors = []
-         for error in parameter_set.expected_errors:
-             self.assertIn(error, errors)
-         self.assertEqual(json_response['content'], parameter_set.expected_content)
+    # def run_input_validation_test(self, parameter_set):
+    #      self.initialise_page()
+    #      self.state_input.send_keys(parameter_set.inputs.state_input)
+    #      self.post_button.click()
+    #      json_response = self.get_json_response()
+    #      self.assertEqual(json_response['status'], parameter_set.expected_status_code)
+    #      try:
+    #          errors = json_response['errors']
+    #      except KeyError:
+    #          errors = []
+    #      for error in parameter_set.expected_errors:
+    #          self.assertIn(error, errors)
+    #      self.assertEqual(json_response['content'], parameter_set.expected_content)
 
     def initialise_page(self):
         self.browser.get(self.server_url)
-        self.post_section = self.browser.find_element_by_id("id-debug-post-section")
-        self.state_input = self.post_section.find_element_by_css_selector("input#id-state-input")
-        self.post_button = self.post_section.find_element_by_css_selector('input[type="submit"]')
-        self.get_section = self.browser.find_element_by_id('id-debug-get-section')
-        self.get_button = self.get_section.find_element_by_css_selector('input[type="submit"]')
+        self.section = self.browser.find_element_by_id('id-debug-section')
+        self.form = self.section.find_element_by_tag_name('form')
+        self.house_code_input = self.section.find_element_by_id('id-house-code-input')
+        self.button = self.form.find_element_by_css_selector('input[type="submit"]')
 
     def test_main(self):
-        self.initialise_page()
-        h2 = self.post_section.find_element_by_tag_name('h2')
-        self.assertEqual(h2.text, 'POST /api/debug')
-        
-        # user inputs valid input
-        x = self.PostTestParameterSet()
-        x.inputs.state_input = 'on'
-        x.expected_errors = []
-        x.expected_status_code = 200
-        x.expected_content = None
-        self.run_input_validation_test(x)
+        # user inputs a house code into the database
+        self.post_house_code('FA-32')
 
+        # user reloads the api page
+        self.initialise_page()
+        h2 = self.section.find_element_by_tag_name('h2')
+        self.assertEqual(h2.text, '/api/debug/<house code>')
+
+        self.house_code_input.send_keys('FA-32')
+        self.form.submit()
         self.assertEqual(self.browser.current_url, self.server_url + '/api/debug')
 
         # user checks input with /api/debug GET
@@ -313,9 +310,7 @@ class ValveTest(FunctionalTest):
         self.initialise_page()
         self.house_code_input.send_keys(parameter_set.inputs.house_code)
         self.open_input.send_keys(parameter_set.inputs.open_input)
-        self.min_temp_input.send_keys(parameter_set.inputs.min_temp)
-        self.max_temp_input.send_keys(parameter_set.inputs.max_temp)
-        self.button.click()
+        self.form.submit()
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], parameter_set.expected_status_code)
         errors = json_response['errors']
@@ -327,9 +322,7 @@ class ValveTest(FunctionalTest):
         self.section = self.browser.find_element_by_id("id-valve-section")
         self.house_code_input = self.section.find_element_by_css_selector("input#id-house-code-input")
         self.open_input = self.section.find_element_by_css_selector("input#id-open-input")
-        self.max_temp_input = self.section.find_element_by_css_selector("input#id-max-temp-input")
-        self.min_temp_input = self.section.find_element_by_css_selector("input#id-min-temp-input")
-        self.button = self.section.find_element_by_css_selector('input[type="submit"]')
+        self.form = self.section.find_element_by_tag_name('form')
 
     def test_main(self):
 
@@ -339,18 +332,14 @@ class ValveTest(FunctionalTest):
 
         section = self.browser.find_element_by_id("id-post-house-codes-section")
         input = section.find_element_by_id("id-house-codes-input")
-        input.send_keys("FA-32")
-        button = section.find_element_by_css_selector('input[type="submit"]')
-        button.click()
+        input.send_keys("FA-32\n")
 
         # user inputs valid input
         self.initialise_page()
 
         self.house_code_input.send_keys('FA-32')
         self.open_input.send_keys("50")
-        self.min_temp_input.send_keys("20")
-        self.max_temp_input.send_keys("25")
-        self.button.click()
+        self.form.submit()
         self.assertEqual(self.browser.current_url, self.server_url + '/api/valve/FA-32')
         # TODO: Test the response of the form submission, don't know what the response looks like currently
         json_response = self.get_json_response()
@@ -359,7 +348,7 @@ class ValveTest(FunctionalTest):
         # user inputs a house-code that has a valid format but does not exist
         self.initialise_page()
         self.house_code_input.send_keys('FA-11')
-        self.button.click()
+        self.form.submit()
         response = json.loads(self.browser.find_element_by_tag_name("pre").text)
         self.assertEqual(response['errors'], [HOUSE_CODE_NOT_FOUND_MSG.format('FA-11')])
         
@@ -369,16 +358,12 @@ class ValveTest(FunctionalTest):
         x = self.TestParameterSet()
         x.inputs.house_code = ''
         x.inputs.open_input = '50'
-        x.inputs.min_temp = '10'
-        x.inputs.max_temp = '25'
         x.expected_errors = [HOUSE_CODE_NOT_FOUND_MSG.format('')]
         x.expected_status_code = INVALID_INPUT_STATUS
         self.run_input_validation_test(x)
         x = self.TestParameterSet()
         x.inputs.house_code = 'HOUSECODE'
         x.inputs.open_input = '50'
-        x.inputs.min_temp = '10'
-        x.inputs.max_temp = '25'
         x.expected_errors = [HOUSE_CODE_NOT_FOUND_MSG.format('HOUSECODE')]
         x.expected_status_code = INVALID_INPUT_STATUS
         self.run_input_validation_test(x)
@@ -388,11 +373,7 @@ class ValveTest(FunctionalTest):
         x = self.TestParameterSet()
         x.inputs.house_code = 'FA-32'
         x.inputs.open_input = ''
-        x.inputs.min_temp = ''
-        x.inputs.max_temp = ''
         x.expected_errors = ['Invalid input for parameter: open_input. Received: , expected: 0-100']
-        x.expected_errors += ['Invalid input for parameter: min_temp. Received: , expected: 7-28']
-        x.expected_errors += ['Invalid input for parameter: max_temp. Received: , expected: 7-28']
         x.expected_status_code = INVALID_INPUT_STATUS
         test_parameter_sets += [x]
 
@@ -400,8 +381,6 @@ class ValveTest(FunctionalTest):
         x = self.TestParameterSet()
         x.inputs.house_code = 'FA-32'
         x.inputs.open_input = "-1"
-        x.inputs.min_temp = "10"
-        x.inputs.max_temp = "20"
         x.expected_status_code = INVALID_INPUT_STATUS
         x.expected_errors = ["Invalid input for parameter: open_input. Received: -1, expected: 0-100"]
         test_parameter_sets += [x]
@@ -409,77 +388,8 @@ class ValveTest(FunctionalTest):
         x = self.TestParameterSet()
         x.inputs.house_code = 'FA-32'
         x.inputs.open_input = "101"
-        x.inputs.min_temp = "10"
-        x.inputs.max_temp = "20"
         x.expected_status_code = INVALID_INPUT_STATUS
         x.expected_errors = ["Invalid input for parameter: open_input. Received: 101, expected: 0-100"]
-        test_parameter_sets += [x]
-
-        # min_temp outside range - below min
-        x = self.TestParameterSet()
-        x.inputs.house_code = 'FA-32'
-        x.inputs.open_input = "50"
-        x.inputs.min_temp = "6"
-        x.inputs.max_temp = "20"
-        x.expected_status_code = INVALID_INPUT_STATUS
-        x.expected_errors = ["Invalid input for parameter: min_temp. Received: 6, expected: 7-28"]
-        test_parameter_sets += [x]
-        # min temp outside range - above max
-        x = self.TestParameterSet()
-        x.inputs.house_code = 'FA-32'
-        x.inputs.open_input = "50"
-        x.inputs.min_temp = "29"
-        x.inputs.max_temp = "20"
-        x.expected_status_code = INVALID_INPUT_STATUS
-        x.expected_errors = ["Invalid input for parameter: min_temp. Received: 29, expected: 7-28"]
-        test_parameter_sets += [x]
-
-        # max_temp outside range - below max
-        x = self.TestParameterSet()
-        x.inputs.house_code = 'FA-32'
-        x.inputs.open_input = "50"
-        x.inputs.min_temp = "10"
-        x.inputs.max_temp = "6"
-        x.expected_status_code = INVALID_INPUT_STATUS
-        x.expected_errors = ["Invalid input for parameter: max_temp. Received: 6, expected: 7-28"]
-        test_parameter_sets += [x]
-        # max temp outside range - above max
-        x = self.TestParameterSet()
-        x.inputs.house_code = 'FA-32'
-        x.inputs.open_input = "50"
-        x.inputs.min_temp = "10"
-        x.inputs.max_temp = "29"
-        x.expected_status_code = INVALID_INPUT_STATUS
-        x.expected_errors = ["Invalid input for parameter: max_temp. Received: 29, expected: 7-28"]
-        test_parameter_sets += [x]
-
-        # max temp outside range - above max
-        x = self.TestParameterSet()
-        x.inputs.open_input = "50"
-        x.inputs.house_code = 'FA-32'
-        x.inputs.min_temp = "10"
-        x.inputs.max_temp = "29"
-        x.expected_status_code = INVALID_INPUT_STATUS
-        x.expected_errors = ["Invalid input for parameter: max_temp. Received: 29, expected: 7-28"]
-        test_parameter_sets += [x]
-
-        # user puts a max_temp greater or equal to the min temp
-        x = self.TestParameterSet()
-        x.inputs.house_code = 'FA-32'
-        x.inputs.open_input = "50"
-        x.inputs.min_temp = "20"
-        x.inputs.max_temp = "20"
-        x.expected_status_code = INVALID_INPUT_STATUS
-        x.expected_errors = ["Invalid input for parameter: max_temp. max_temp (20) must be greater than min_temp (20)"]
-        test_parameter_sets += [x]
-
-        x = self.TestParameterSet()
-        x.inputs.house_code = 'FA-32'
-        x.inputs.open_input = "50"
-        x.inputs.min_temp = "21"
-        x.inputs.max_temp = "20"
-        x.expected_status_code = INVALID_INPUT_STATUS
-        x.expected_errors = ["Invalid input for parameter: max_temp. max_temp (20) must be greater than min_temp (21)"]
         test_parameter_sets += [x]
 
         for parameter_set in test_parameter_sets:

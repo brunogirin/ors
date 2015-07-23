@@ -125,7 +125,8 @@ class HouseCode(models.Model):
         return dict_
     
 class Debug(models.Model):
-    state = models.CharField(max_length=3, default="off")
+    # state = models.CharField(max_length=3, default="off")
+    pass
 
 class Led(models.Model):
     colour = models.IntegerField(choices=[(i, i) for i in VALID_COLOURS])

@@ -107,6 +107,7 @@ print
 print 'Setting up database'
 os.chdir(source_dir)
 subprocess.call([os.path.join(virtualenv_bin_dir, 'python'), 'manage.py', 'migrate', '--noinput'])
+print
 
 print 'Setting up nginx'
 with open(source_dir + '/deploy_tools/nginx.template.conf', 'r') as f:
@@ -119,6 +120,7 @@ with open(source_dir + '/deploy_tools/nginx.conf', 'w') as f:
     for line in lines:
         f.write(line)
 
+print 'test'
 
 
 

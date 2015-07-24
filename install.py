@@ -120,7 +120,7 @@ with open(source_dir + '/deploy_tools/nginx.conf', 'w') as f:
     for line in lines:
         f.write(line)
 
-print 'test4'
+print 'test5'
 
 
 

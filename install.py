@@ -50,12 +50,7 @@ if os.path.exists(os.path.join(source_dir, '.git')):
 else:
     print '\Existing local repository not found. Cloning from repo: {}'.format(REPO_URL)
     subprocess.call(['git', 'clone', REPO_URL, source_dir])
-    # os.chdir(source_dir)
 # get the most up to date commit on the server if installing from remote or from the local source code repo
-# current_commit = subprocess.check_output(['git', 'log', '-n', '1', '--format=%H']).replace('\n', '')
-# print '\tcurrent_commit: {}'.format(current_commit)
-# print '\tUpdate source code to current commit'
-# print subprocess.call(['git', 'reset', '--hard', current_commit])
 subprocess.call(['git', 'reset', '--hard', 'origin'])
 
 print 'Updating the settings'

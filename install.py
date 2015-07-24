@@ -120,10 +120,10 @@ with open(source_dir + '/deploy_tools/nginx.conf', 'w') as f:
 nginx_conf_filepath = '/etc/nginx/sites-available/{}'.format(host)
 print 'mv {} {}'.format(source_dir + '/deploy_tools/nginx.conf', nginx_conf_filepath)
 subprocess.call(['mv', source_dir + '/deploy_tools/nginx.conf', nginx_conf_filepath])
-print 'rm {}'.format('/etc/nginx/sites-enabled/*')
-subprocess.call(['rm', '/etc/nginx/sites-enabled/*'])
-print 'ln -s {} {}'.format(nginx_conf_filepath, '/etc/nginx/sites-enabled/')
-subprocess.call(['ln', '-s', nginx_conf_filepath, '/etc/nginx/sites-enabled/'])
+# print 'rm {}'.format('/etc/nginx/sites-enabled/*')
+# subprocess.call(['rm', '/etc/nginx/sites-enabled/*'])
+print 'ln -sf {} {}'.format(nginx_conf_filepath, '/etc/nginx/sites-enabled/')
+subprocess.call(['ln', '-sf', nginx_conf_filepath, '/etc/nginx/sites-enabled/'])
 print 'service nginx restart'
 subprocess.call(['service', 'nginx', 'restart'])
 
@@ -138,15 +138,15 @@ with open(source_dir + '/deploy_tools/gunicorn.conf', 'w') as f:
     for line in lines:
         print line
         f.write(line)
-gunicorn_conf_filepath = '/etc/init/gunicorn-{}.conf'.format(host)
+gunicorn_conf_filepath = '/etc/init/gunicorn-{}'.format(host)
 print 'gunicorn_conf_filepath: {}'.format(gunicorn_conf_filepath)
 print ' '.join(['mv', source_dir + '/deploy_tools/gunicorn.conf', gunicorn_conf_filepath])
-subprocess.call(['mv', source_dir + '/deploy_tools/gunicorn-upstart.template.conf', gunicorn_conf_filepath])
+subprocess.call(['mv', source_dir + '/deploy_tools/gunicorn.conf', gunicorn_conf_filepath])
 print ' '.join(['start', os.path.split(gunicorn_conf_filepath)[1]])
 ret = subprocess.call(['start', os.path.split(gunicorn_conf_filepath)[1]])
 if ret != 0:
     print ' '.join(['restart', os.path.split(gunicorn_conf_filepath)[1]])
-    subprocess.call(['restart', os.path.split(gunicorn_conf_filepath)[1])
+    subprocess.call(['restart', os.path.split(gunicorn_conf_filepath)[1]])
 
 # from fabric.contrib.files import append, exists, sed
 # from fabric.api import env, local, run

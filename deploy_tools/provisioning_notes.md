@@ -8,11 +8,11 @@ Provision a new site
 * Git 1.9.1
 * pip 7.1.0
 * virtualenv 13.1.0
-
+* docopt==0.6.2
 e.g., on Ubuntu
 
     sudo apt-get install nginx git python python-pip
-    sudo pip install virtualenv
+    sudo pip install virtualenv docopt==0.6.2
 
 ## Nginx Virtual Host config
 

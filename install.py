@@ -116,19 +116,37 @@ with open(source_dir + '/deploy_tools/nginx.template.conf', 'r') as f:
 with open(source_dir + '/deploy_tools/nginx.conf', 'w') as f:
     for line in lines:
         f.write(line)
+        print line
+nginx_conf_filepath = '/etc/nginx/sites-available/{}'.format(host)
+print 'mv {} {}'.format(source_dir + '/deploy_tools/nginx.conf', nginx_conf_filepath)
+subprocess.call(['mv', source_dir + '/deploy_tools/nginx.conf', nginx_conf_filepath])
+print 'rm {}'.format('/etc/nginx/sites-enabled/*')
+subprocess.call(['rm', '/etc/nginx/sites-enabled/*'])
+print 'ln -s {} {}'.format(nginx_conf_filepath, '/etc/nginx/sites-enabled/')
+subprocess.call(['ln', '-s', nginx_conf_filepath, '/etc/nginx/sites-enabled/'])
+print 'service nginx restart'
+subprocess.call(['service', 'nginx', 'restart'])
 
-print 'test5'
-
-
-
-
-
-
-
-
-
-
-
+print 'Setting up gunicorn'
+with open(source_dir + '/deploy_tools/gunicorn-upstart.template.conf') as f:
+    lines = []
+    for line in f:
+        line = line.replace('SITENAME', host)
+        line = line.replace('SITEDIR', install_dir)
+        lines.append(line)
+with open(source_dir + '/deploy_tools/gunicorn.conf', 'w') as f:
+    for line in lines:
+        print line
+        f.write(line)
+gunicorn_conf_filepath = '/etc/init/gunicorn-{}.conf'.format(host)
+print 'gunicorn_conf_filepath: {}'.format(gunicorn_conf_filepath)
+print ' '.join(['mv', source_dir + '/deploy_tools/gunicorn.conf', gunicorn_conf_filepath])
+subprocess.call(['mv', source_dir + '/deploy_tools/gunicorn-upstart.template.conf', gunicorn_conf_filepath])
+print ' '.join(['start', os.path.split(gunicorn_conf_filepath)[1]])
+ret = subprocess.call(['start', os.path.split(gunicorn_conf_filepath)[1]])
+if ret != 0:
+    print ' '.join(['restart', os.path.split(gunicorn_conf_filepath)[1]])
+    subprocess.call(['restart', os.path.split(gunicorn_conf_filepath)[1])
 
 # from fabric.contrib.files import append, exists, sed
 # from fabric.api import env, local, run

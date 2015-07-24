@@ -54,7 +54,7 @@ else:
 current_commit = subprocess.check_output(['git', 'log', '-n', '1', '--format=%H']).replace('\n', '')
 print '\tcurrent_commit: {}'.format(current_commit)
 print '\tUpdate source code to current commit'
-subprocess.check_call(['git', 'reset', '--hard', current_commit])
+print subprocess.call(['git', 'reset', '--hard', current_commit])
 
 print 'Updating the settings'
 settings_path = os.path.join(source_dir, 'ors/settings.py')

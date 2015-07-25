@@ -115,24 +115,32 @@ subprocess.call([os.path.join(virtualenv_bin_dir, 'python'), 'manage.py', 'migra
 print
 
 print 'Setting up nginx'
+print '\tCreating nginx config file'
+string_representation = ''
+nginx_conf_filepath = '/etc/nginx/sites-available/{}'.format(host)
 with open(source_dir + '/deploy_tools/nginx.template.conf', 'r') as f:
     lines = []
     for l in f:
         l = l.replace('SITENAME', host)
         l = l.replace('SITEDIR', install_dir)
         lines.append(l)
-with open(source_dir + '/deploy_tools/nginx.conf', 'w') as f:
+with open(nginx_conf_filepath, 'w') as f:
     for line in lines:
         f.write(line)
-        print line
-nginx_conf_filepath = '/etc/nginx/sites-available/{}'.format(host)
-print 'mv {} {}'.format(source_dir + '/deploy_tools/nginx.conf', nginx_conf_filepath)
-subprocess.call(['mv', source_dir + '/deploy_tools/nginx.conf', nginx_conf_filepath])
-# print 'rm {}'.format('/etc/nginx/sites-enabled/*')
-# subprocess.call(['rm', '/etc/nginx/sites-enabled/*'])
-print 'ln -sf {} {}'.format(nginx_conf_filepath, '/etc/nginx/sites-enabled/')
-subprocess.call(['ln', '-sf', nginx_conf_filepath, '/etc/nginx/sites-enabled/'])
-print 'service nginx restart'
+        string_representation += line
+print '{}:'.format(nginx_conf_filepath)
+print string_representation
+print '\tConfiguring nginx enabled sites'
+print '\tRemoving previous enabled sites'
+NGINX_ENABLED_SITES_DIR = '/etc/nginx/sites-enabled'
+enabled_sites = os.listdir(NGINX_ENABLED_SITES_DIR)
+for site in enabled_sites:
+    print '\t\t Removing {}'.format(os.path.join(NGINX_ENABLED_SITES_DIR, site))
+    os.remove(os.path.join(NGINX_ENABLED_SITES_DIR, site))
+print '\tEnabling new nginx config file'
+print '\tln -sf {} {}'.format(nginx_conf_filepath, NGINX_ENABLED_SITES_DIR)
+subprocess.call(['ln', '-sf', nginx_conf_filepath, NGINX_ENABLED_SITES_DIR])
+print '\tservice nginx restart'
 subprocess.call(['service', 'nginx', 'restart'])
 
 print 'Setting up gunicorn'
@@ -153,6 +161,6 @@ subprocess.call(['mv', source_dir + '/deploy_tools/gunicorn.conf', gunicorn_conf
 print ' '.join(['start', os.path.split(gunicorn_conf_filepath.replace('conf', ''))[1]])
 ret = subprocess.call(['start', os.path.split(gunicorn_conf_filepath.replace('.conf', ''))[1]])
 if ret != 0:
-    print ' '.join(['restart', os.path.split(gunicorn_conf_filepath.replace('conf', ''))[1]])
-    subprocess.call(['restart', os.path.split(gunicorn_conf_filepath.replace('conf', ''))[1]])
+    print ' '.join(['restart', os.path.split(gunicorn_conf_filepath.replace('.conf', ''))[1]])
+    subprocess.call(['restart', os.path.split(gunicorn_conf_filepath.replace('.conf', ''))[1]])
 

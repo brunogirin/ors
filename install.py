@@ -131,12 +131,12 @@ with open(nginx_conf_filepath, 'w') as f:
 print '{}:'.format(nginx_conf_filepath)
 print string_representation
 print '\tConfiguring nginx enabled sites'
-print '\tRemoving previous enabled sites'
-NGINX_ENABLED_SITES_DIR = '/etc/nginx/sites-enabled'
-enabled_sites = os.listdir(NGINX_ENABLED_SITES_DIR)
-for site in enabled_sites:
-    print '\t\t Removing {}'.format(os.path.join(NGINX_ENABLED_SITES_DIR, site))
-    os.remove(os.path.join(NGINX_ENABLED_SITES_DIR, site))
+# print '\tRemoving previous enabled sites'
+# NGINX_ENABLED_SITES_DIR = '/etc/nginx/sites-enabled'
+# enabled_sites = os.listdir(NGINX_ENABLED_SITES_DIR)
+# for site in enabled_sites:
+#     print '\t\t Removing {}'.format(os.path.join(NGINX_ENABLED_SITES_DIR, site))
+#     os.remove(os.path.join(NGINX_ENABLED_SITES_DIR, site))
 print '\tEnabling new nginx config file'
 print '\tln -sf {} {}'.format(nginx_conf_filepath, NGINX_ENABLED_SITES_DIR)
 subprocess.call(['ln', '-sf', nginx_conf_filepath, NGINX_ENABLED_SITES_DIR])

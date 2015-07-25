@@ -7,7 +7,7 @@ Usage:
   orsserver.py restart [--host=<host> --port=<port>]
 
 Options:
-  --host=<host>  The host namne of the server. [default: 46.101.52.242]
+  --host=<host>  The host namne of the server. [default: ors]
   --port=<port>  The port number for the HTTP server. [default: 1023]
 """
 

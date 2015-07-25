@@ -3,10 +3,12 @@
 Installs the OpenTRV Open REST Server. You can install from a local source folder with the "local" command or directly from the github repository using the "remote" command.
 
 Usage: 
-  install (local <source> | remote ) <host> [--target-dir=<target>]
+  install (local [--source-dir=<source-dir>] | remote ) [--host=<host> --target-dir=<target>]
 
 Options:
-  --target-dir=<target>  Install directory [default: /var/www].
+  --host=<host>               The host name [default: ors]
+  --target-dir=<target>       Install directory [default: /var/www].
+  --source-dir=<source-dir>   Source directory, where the git local repository is [default: ]
 """
 import os, subprocess, argparse
 from docopt import docopt
@@ -15,15 +17,21 @@ print argv
 
 print 'installing opentrv'
 
-host = argv['<host>']
-install_dir = os.path.join(os.path.abspath(os.path.expanduser(argv['--target-dir'])), host)
+host = argv['--host']
+target_dir = argv['--target-dir']
+source_dir = argv['--source-dir']
+
+source_dir = os.path.abspath(os.path.expanduser(source_dir))
+target_dir = os.path.expanduser(target_dir)
+target_dir = os.path.abspath(target_dir)
+install_dir = os.path.join(target_dir, host)
 
 print 'host: {}'.format(host)
 print 'install_dir: {}'.format(install_dir)
 if argv['remote']:
     REPO_URL = 'https://github.com/opentrv/ors'
 elif argv['local']:
-    REPO_URL = os.path.abspath(argv['<source>'])
+                                           REPO_URL = source_dir
 else:
     raise(Exception())
 print 'REPO_URL: {}'.format(REPO_URL)
@@ -138,61 +146,13 @@ with open(source_dir + '/deploy_tools/gunicorn.conf', 'w') as f:
     for line in lines:
         print line
         f.write(line)
-gunicorn_conf_filepath = '/etc/init/gunicorn-{}'.format(host)
+gunicorn_conf_filepath = '/etc/init/gunicorn-{}.conf'.format(host)
 print 'gunicorn_conf_filepath: {}'.format(gunicorn_conf_filepath)
 print ' '.join(['mv', source_dir + '/deploy_tools/gunicorn.conf', gunicorn_conf_filepath])
 subprocess.call(['mv', source_dir + '/deploy_tools/gunicorn.conf', gunicorn_conf_filepath])
-print ' '.join(['start', os.path.split(gunicorn_conf_filepath)[1]])
-ret = subprocess.call(['start', os.path.split(gunicorn_conf_filepath)[1]])
+print ' '.join(['start', os.path.split(gunicorn_conf_filepath.replace('conf', ''))[1]])
+ret = subprocess.call(['start', os.path.split(gunicorn_conf_filepath.replace('.conf', ''))[1]])
 if ret != 0:
-    print ' '.join(['restart', os.path.split(gunicorn_conf_filepath)[1]])
-    subprocess.call(['restart', os.path.split(gunicorn_conf_filepath)[1]])
+    print ' '.join(['restart', os.path.split(gunicorn_conf_filepath.replace('conf', ''))[1]])
+    subprocess.call(['restart', os.path.split(gunicorn_conf_filepath.replace('conf', ''))[1]])
 
-# from fabric.contrib.files import append, exists, sed
-# from fabric.api import env, local, run
-# import random
-
-# def deploy():
-#     site_folder = '/var/www/%s' % (env.host)
-#     source_folder = site_folder + '/source'
-#     _create_directory_structure_if_necessary(site_folder)
-#     _get_latest_source(source_folder)
-#     _update_settings(source_folder, env.host)
-#     _update_virtualenv(source_folder)
-#     _update_static_files(source_folder)
-#     _update_database(source_folder)
-
-# def _create_directory_structure_if_necessary(site_folder):
-#     for subfolder in ('database', 'static', 'virtualenv', 'source'):
-#         run('mkdir -p %s/%s' % (site_folder, subfolder))
-        
-# def _get_latest_source(source_folder):
-#     if exists(source_folder + '/.git'):
-#         run('cd %s && git fetch' % (source_folder,))
-#     else:
-#         run('git clone %s %s' %(REPO_URL, source_folder))
-#     current_commit = local("git log -n 1 --format=%H", capture=True)
-#     run('cd %s && git reset --hard %s' % (source_folder, current_commit))
-
-# def _update_settings(source_folder, site_name):
-#     settings_path = source_folder + '/ors/settings.py'
-#     sed(settings_path, "DEBUG = True", "DEBUG = False")
-#     sed(settings_path, 'DOMAIN = "localhost"', 'DOMAIN = "%s"' % (site_name,))
-#     secret_key_file = source_folder + '/ors/secret_key.py'
-#     if not exists(secret_key_file):
-#         chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)'
-#         key = ''.join(random.SystemRandom().choice(chars) for _ in range(50))
-#         append(secret_key_file, "SECRET_KEY = '%s'" % (key,))
-#     append(settings_path, '\nfrom .secret_key import SECRET_KEY')
-
-# def _update_virtualenv(source_folder):
-#     virtualenv_folder = source_folder + '/../virtualenv'
-#     if not exists(virtualenv_folder + '/bin/pip'):
-#         run('virtualenv %s' % (virtualenv_folder,))
-#     run('%s/bin/pip install -r %s/requirements.txt' % (virtualenv_folder, source_folder))
-
-# def _update_static_files(source_folder):
-#     run('cd %s && ../virtualenv/bin/python manage.py collectstatic --noinput' % (source_folder,))
-
-# def _update_database(source_folder):
-#     run('cd %s && ../virtualenv/bin/python manage.py migrate --noinput' % (source_folder,))

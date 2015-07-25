@@ -132,7 +132,7 @@ print '{}:'.format(nginx_conf_filepath)
 print string_representation
 print '\tConfiguring nginx enabled sites'
 # print '\tRemoving previous enabled sites'
-# NGINX_ENABLED_SITES_DIR = '/etc/nginx/sites-enabled'
+NGINX_ENABLED_SITES_DIR = '/etc/nginx/sites-enabled'
 # enabled_sites = os.listdir(NGINX_ENABLED_SITES_DIR)
 # for site in enabled_sites:
 #     print '\t\t Removing {}'.format(os.path.join(NGINX_ENABLED_SITES_DIR, site))

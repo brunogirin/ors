@@ -149,6 +149,8 @@ with open(source_dir + '/deploy_tools/gunicorn-upstart.template.conf') as f:
     for line in f:
         line = line.replace('SITENAME', host)
         line = line.replace('SITEDIR', install_dir)
+        if line.startswith('setuid'):
+            line = 'setuid {}\n'.format(os.environ['USER'])
         lines.append(line)
 with open(source_dir + '/deploy_tools/gunicorn.conf', 'w') as f:
     for line in lines:

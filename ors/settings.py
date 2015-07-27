@@ -42,6 +42,7 @@ INSTALLED_APPS = (
     'api',
     'ors',
     'rev2_emulator',
+    'rev2',
 )
 
 MIDDLEWARE_CLASSES = (

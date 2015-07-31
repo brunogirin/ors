@@ -83,25 +83,6 @@ def led_view(request, house_code):
     except MultiValueDictKeyError:
         response['status'] = INVALID_INPUT_STATUS
         errors.append(MISSING_LED_REPEAT_INTERVAL_MSG)
-        
-
-
-    # # flash
-    # try:
-    #     led.flash = int(request.POST['flash'])
-    #     if led.flash not in VALID_FLASH:
-    #         raise ValueError()
-    # except MultiValueDictKeyError:
-    #     errors.append('Required input parameter: flash')
-    #     response['status'] = INVALID_INPUT_STATUS
-    # except ValueError:
-    #     errors.append('Invalid input for parameter: flash. Received: {}, expected: {}'.format(request.POST['flash'], VALID_FLASH))
-    #     response['status'] = INVALID_INPUT_STATUS
-
-    # if len(errors) == 0:
-    #     led.save()
-    # else:
-    #     response['errors'] = errors
 
     if len(errors):
         response['errors'] = errors
@@ -115,23 +96,6 @@ def debug_view(request, house_code):
     except ObjectDoesNotExist:
         response['status'] = INVALID_INPUT_STATUS
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(house_code)]
-        # debug = Debug.objects.first()
-    # if debug == None:    
-    #     debug = Debug.objects.create(state="off")
-    # if request.method == "POST":
-    #     try:
-    #         state = request.POST['state']
-    #         if state not in ['on', 'off']:
-    #             response['errors'] = ['Invalid input for parameter: state. Received: {}, expected: on/off'.format(state)]
-    #             response['status'] = INVALID_INPUT_STATUS
-    #         else:
-    #             debug.state = state
-    #             debug.save()
-    #     except MultiValueDictKeyError:
-    #         response['errors'] = ['Required input parameter: state']
-    #         response['status'] = INVALID_INPUT_STATUS
-    # else:
-    #     response['content'] = debug.state
     return JsonResponse(response)
 
 def api_documentation(request):

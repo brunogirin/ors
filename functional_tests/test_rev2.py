@@ -24,9 +24,10 @@ class Rev2TestCase(StaticLiveServerTestCase):
         if cls.server_url == cls.live_server_url: # i.e. a test on the local machine
             super(Rev2TestCase, cls).tearDownClass()
 
-    @patch('rev2.ser')
-    def test_user_posts_a_house_code(self, mock_ser):
-
+    @patch('rev2.connect_to_rev2')
+    def test_user_posts_a_house_code(self, mock_connect):
+        mock_ser = mock.Mock()
+        mock_connect.return_value = mock_ser
         mock_ser.readline = mock.Mock()
         mock_ser.readline.side_effect = [
             '>',

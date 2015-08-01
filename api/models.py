@@ -42,16 +42,17 @@ class HouseCode(models.Model):
         start_time = datetime.datetime.now()
         timeout = datetime.timedelta(seconds=10)
         regex = "'\*' (?P<house_code>[\w\-\d]+) [\w\-\d]+ (?P<window>\w+)\|(?P<switch>\w+)\|1\+(?P<relative_humidity>\d+) 1\+(?P<temperature_ds18b20>\d+) 1\+(?P<temperature_opentrv>\d+) (?P<synchronising>\w+)\|(?P<ambient_light>\d+)\|0 nzcrc"
+        rev2_conn = rev2.connect_to_rev2()
         while True:
-            line = rev2.ser.readline()
+            line = rev2_conn.readline()
             if line.startswith('>'):
                 time.sleep(1.)
-                rev2.ser.write('S\n') # TODO: write the poll and poll sequence to trigger a poll response
+                rev2_conn.write('S\n') # TODO: write the poll and poll sequence to trigger a poll response
                 break
             if datetime.datetime.now() - start_time > timeout:
                 raise Exception('Timeout: No response from REV2, did not see input prompt')
         while True:
-            line = rev2.ser.readline()
+            line = rev2_conn.readline()
             if line.startswith("'*'"):
                 m = re.search(regex, line)
                 house_code = m.group('house_code')

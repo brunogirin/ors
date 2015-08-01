@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils.datastructures import MultiValueDictKeyError
 from api.models import HouseCode, INVALID_HOUSE_CODE_MSG, HOUSE_CODE_NOT_FOUND_MSG
 from api.models import Debug
+from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
 
@@ -101,6 +102,7 @@ def debug_view(request, house_code):
 def api_documentation(request):
     return render(request, 'api/api_documentation.html', {'list': []})
 
+@csrf_exempt
 def house_codes(request):
     if request.method == "GET":
         house_codes = [house_code.code for house_code in HouseCode.objects.all()]
@@ -140,6 +142,7 @@ def house_codes(request):
 
         HouseCode.objects.all().delete()
         for house_code in house_codes:
+            house_code.poll()
             house_code.save()
 
         response = {}

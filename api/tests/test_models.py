@@ -1,3 +1,5 @@
+import datetime
+import mock
 from collections import OrderedDict
 from django.test import TestCase
 from django.core.exceptions import ValidationError
@@ -5,6 +7,28 @@ from api.models import HouseCode
 
 class HouseCodeTests(TestCase):
 
+    @mock.patch('rev2.ser')
+    def test_poll_updates_house_code(self, mock_ser):
+        mock_ser.readline = mock.Mock()
+        mock_ser.readline.side_effect = [
+            '>',
+            "'*' FA-32 FA-32 false|false|1+37 1+100 1+100 false|50|0 nzcrc",
+        ]
+        
+        hc = HouseCode.objects.create(code='FA-32')
+        hc.poll()
+
+        now = datetime.datetime.now()
+        self.assertEqual(hc.relative_humidity, 74)
+        self.assertEqual(hc.temperature_opentrv, '50.000')
+        self.assertEqual(hc.temperature_ds18b20, '25.000')
+        self.assertEqual(hc.window, 'closed')
+        self.assertEqual(hc.switch, 'off')
+        self.assertTrue(now - hc.last_updated_all < datetime.timedelta(seconds=1))
+        self.assertTrue(now - hc.last_updated_temperature < datetime.timedelta(seconds=1))
+        self.assertEqual(hc.synchronising, 'off')
+        self.assertEqual(hc.ambient_light, 205)
+    
     def test_invalid_input_for_temperature_ds18b20(self):
         hc = HouseCode.objects.create(code='FA-32')
         hc.temperature_ds18b20 = 'asdf'

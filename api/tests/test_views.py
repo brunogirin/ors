@@ -1,3 +1,5 @@
+import rev2
+import mock
 from mock import Mock, patch
 from functools import wraps
 import json
@@ -9,7 +11,6 @@ from api.views import MISSING_LED_COLOUR_MSG, MISSING_LED_STATE_MSG, MISSING_LED
 from django.core.urlresolvers import resolve
 from api.models import HouseCode, INVALID_HOUSE_CODE_MSG, HOUSE_CODE_NOT_FOUND_MSG
 from api.forms import ValveForm
-
 
 class ApiViewTest(TestCase):
 
@@ -107,57 +108,6 @@ class ApiDebugTest(ApiViewTest):
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
         self.assertIn(HOUSE_CODE_NOT_FOUND_MSG.format('FA-32'), response['errors'])
         
-    # def test_missing_arguments_returns_error(self):
-    #     response = self.client.post('/api/debug')
-    #     response = json.loads(response.content)
-    #     self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-    #     self.assertEqual(response['errors'], ['Required input parameter: state'])
-
-    # def test_invalid_arguments_returns_error(self):
-    #     response = self.client.post('/api/debug', data={'state': 'ON'})
-    #     response = json.loads(response.content)
-    #     self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-    #     self.assertEqual(response['errors'], ['Invalid input for parameter: state. Received: ON, expected: on/off'])
-
-    # def test_post_state_on_turns_debug_on(self):
-    #     self.client.post('/api/debug', data={'state': 'on'})
-    #     self.assertEqual(Debug.objects.first().state, 'on')
-
-    # def test_post_state_off_turns_debug_off(self):
-    #     self.client.post('/api/debug', data={'state': 'off'})
-    #     self.assertEqual(Debug.objects.first().state, 'off')
-
-    # def test_changing_state_does_not_add_more_debug_objects(self):
-    #     self.client.post('/api/debug', data={'state': 'on'})
-    #     self.client.post('/api/debug', data={'state': 'off'})
-    #     self.assertEqual(Debug.objects.count(), 1)
-
-    # def test_changing_state(self):
-    #     self.client.post('/api/debug', data={'state': 'on'})
-    #     self.assertEqual(Debug.objects.first().state, 'on')
-    #     self.client.post('/api/debug', data={'state': 'off'})
-    #     self.assertEqual(Debug.objects.first().state, 'off')
-
-    # def test_get_returns_default(self):
-    #     response = self.client.get('/api/debug')
-    #     response = json.loads(response.content)
-    #     self.assertEqual(response['status'], 200)
-    #     self.assertEqual(response['content'], 'off')
-
-    # def test_get_on(self):
-    #     Debug.objects.create(state="on")
-    #     response = self.client.get('/api/debug')
-    #     response = json.loads(response.content)
-    #     self.assertEqual(response['status'], 200)
-    #     self.assertEqual(response['content'], 'on')
-
-    # def test_get_off(self):
-    #     Debug.objects.create(state="off")
-    #     response = self.client.get('/api/debug')
-    #     response = json.loads(response.content)
-    #     self.assertEqual(response['status'], 200)
-    #     self.assertEqual(response['content'], 'off')
-
 class ApiValveTest(ApiViewTest):
 
     def test_api_url_resolves_valve(self):
@@ -240,6 +190,17 @@ class ApiHouseCodesTest(ApiViewTest):
         response = json.loads(response.content)
         self.assertEqual(response['errors'], ['Invalid input for "house-code". Recieved: WX-YZ, expected XX-XX where XX are uppercase hex numbers'])
         self.assertEqual(response['content'], [])
+
+    @patch('api.models.HouseCode.poll', autospec=True)
+    def test_POST_initialises_cache(self, mock_poll):
+        def side_effect(self):
+            self.relative_humidity = 50
+        mock_poll.side_effect = side_effect
+        response = self.client.post('/api/house-codes', data={'house-codes': 'FA-32'})
+        response = self.client.get('/api/status/FA-32')
+        response = json.loads(response.content)
+        response = response['content']
+        self.assertEqual(response['relative-humidity'], 50)
 
     def test_POST_blank_does_not_save(self):
         self.client.post("/api/house-codes", data={"house-codes": ""})

@@ -8,4 +8,5 @@ cd ../damonhd-otradiolink
 git checkout 20150803-DV
 cd ../opentrv-otprotocolcc
 git checkout 20150803-DV
+cd ..
 

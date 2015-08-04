@@ -4,11 +4,21 @@ from django.http import HttpResponse, JsonResponse
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils.datastructures import MultiValueDictKeyError
 from api.models import HouseCode, INVALID_HOUSE_CODE_MSG, HOUSE_CODE_NOT_FOUND_MSG
-from api.models import Debug, VALID_COLOURS, VALID_FLASH, Led
+from api.models import Debug
+from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
 
 INVALID_INPUT_STATUS = 300
+VALID_LED_COLOURS = range(4)
+VALID_LED_STATES = range(4)
+VALID_LED_REPEAT_INTERVALS = range(30, 601)
+INVALID_LED_COLOUR_MSG = 'Invalid input for "colour". Received: {}, expected ' + str(VALID_LED_COLOURS)
+INVALID_LED_STATE_MSG = 'Invalid input for "state". Received: {}, expected ' + str(VALID_LED_STATES)
+INVALID_LED_REPEAT_INTERVAL_MSG = 'Invalid input for "repeat-interval". Received: {}, expected ' + str(VALID_LED_REPEAT_INTERVALS)
+MISSING_LED_COLOUR_MSG = 'Missing input for "colour"'
+MISSING_LED_STATE_MSG = 'Missing input for "state"'
+MISSING_LED_REPEAT_INTERVAL_MSG = 'Missing input for "repeat-interval"'
 
 def status_view(request, house_code):
     response = {'status': 200, 'content': None}
@@ -36,66 +46,63 @@ def led_view(request, house_code):
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(house_code)]
         return JsonResponse(response)
 
-    if Led.objects.count() == 0:
-        led = Led.objects.create(colour=0, flash=1)
-    else:
-        led = Led.objects.first()
-    
     # colour
     try:
-        led.colour = int(request.POST['colour'])
-        if led.colour not in VALID_COLOURS:
-            raise ValueError()
+        colour = request.POST['colour']
+        colour = int(colour)
+        if colour not in VALID_LED_COLOURS:
+            raise ValidationError('')
+    except (ValidationError, ValueError) as e:
+        response['status'] = INVALID_INPUT_STATUS
+        errors.append(INVALID_LED_COLOUR_MSG.format(colour))
     except MultiValueDictKeyError:
-        errors.append('Required input parameter: colour')
         response['status'] = INVALID_INPUT_STATUS
-    except ValueError:
-        errors.append('Invalid input for parameter: colour. Received: {}, expected: {}'.format(request.POST['colour'], VALID_COLOURS))
-        response['status'] = INVALID_INPUT_STATUS
+        errors.append(MISSING_LED_COLOUR_MSG)
 
-    # flash
+    # state
     try:
-        led.flash = int(request.POST['flash'])
-        if led.flash not in VALID_FLASH:
-            raise ValueError()
+        state = request.POST['state']
+        state = int(state)
+        if state not in VALID_LED_STATES:
+            raise ValidationError('')
+    except (ValidationError, ValueError) as e:
+        response['status'] = INVALID_INPUT_STATUS
+        errors.append(INVALID_LED_STATE_MSG.format(state))
     except MultiValueDictKeyError:
-        errors.append('Required input parameter: flash')
         response['status'] = INVALID_INPUT_STATUS
-    except ValueError:
-        errors.append('Invalid input for parameter: flash. Received: {}, expected: {}'.format(request.POST['flash'], VALID_FLASH))
+        errors.append(MISSING_LED_STATE_MSG)
+        
+    # repeat_interval
+    try:
+        repeat_interval = request.POST['repeat-interval']
+        repeat_interval = int(repeat_interval)
+        if repeat_interval not in VALID_LED_REPEAT_INTERVALS:
+            raise ValidationError('')
+    except (ValidationError, ValueError) as e:
         response['status'] = INVALID_INPUT_STATUS
+        errors.append(INVALID_LED_REPEAT_INTERVAL_MSG.format(repeat_interval))
+    except MultiValueDictKeyError:
+        response['status'] = INVALID_INPUT_STATUS
+        errors.append(MISSING_LED_REPEAT_INTERVAL_MSG)
 
-    if len(errors) == 0:
-        led.save()
-    else:
+    if len(errors):
         response['errors'] = errors
 
     return JsonResponse(response)
 
-def debug_view(request):
+def debug_view(request, house_code):
     response = {'status': 200, 'content': None}
-    debug = Debug.objects.first()
-    if debug == None:    
-        debug = Debug.objects.create(state="off")
-    if request.method == "POST":
-        try:
-            state = request.POST['state']
-            if state not in ['on', 'off']:
-                response['errors'] = ['Invalid input for parameter: state. Received: {}, expected: on/off'.format(state)]
-                response['status'] = INVALID_INPUT_STATUS
-            else:
-                debug.state = state
-                debug.save()
-        except MultiValueDictKeyError:
-            response['errors'] = ['Required input parameter: state']
-            response['status'] = INVALID_INPUT_STATUS
-    else:
-        response['content'] = debug.state
+    try:
+        house_code = HouseCode.objects.get(code="house_code")
+    except ObjectDoesNotExist:
+        response['status'] = INVALID_INPUT_STATUS
+        response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(house_code)]
     return JsonResponse(response)
 
 def api_documentation(request):
     return render(request, 'api/api_documentation.html', {'list': []})
 
+@csrf_exempt
 def house_codes(request):
     if request.method == "GET":
         house_codes = [house_code.code for house_code in HouseCode.objects.all()]
@@ -135,6 +142,7 @@ def house_codes(request):
 
         HouseCode.objects.all().delete()
         for house_code in house_codes:
+            house_code.poll()
             house_code.save()
 
         response = {}
@@ -174,41 +182,6 @@ def valve_view(request, house_code):
     except MultiValueDictKeyError:
         errors.append('Required input parameter: open_input')
         response['status'] = INVALID_INPUT_STATUS
-
-    try:
-        min_temp = data['min_temp']
-        min_temp = int(min_temp)
-        if min_temp < 7 or min_temp > 28:
-            raise ValueError()
-    except ValueError:
-        errors.append('Invalid input for parameter: min_temp. Received: {}, expected: 7-28'.format(min_temp))
-        response['status'] = INVALID_INPUT_STATUS
-    except MultiValueDictKeyError:
-        errors.append('Required input parameter: min_temp')
-        response['status'] = INVALID_INPUT_STATUS
-    
-    try:
-        max_temp = data['max_temp']
-        max_temp = int(max_temp)
-        if max_temp < 7 or max_temp > 28:
-            raise ValueError()
-    except ValueError:
-        errors.append('Invalid input for parameter: max_temp. Received: {}, expected: 7-28'.format(max_temp))
-        response['status'] = INVALID_INPUT_STATUS
-    except MultiValueDictKeyError:
-        errors.append('Required input parameter: max_temp')
-        response['status'] = INVALID_INPUT_STATUS
-
-    try:
-        min_temp = int(data['min_temp'])
-        max_temp = int(data['max_temp'])
-        if max_temp <= min_temp:
-            errors.append("Invalid input for parameter: max_temp. max_temp ({}) must be greater than min_temp ({})".format(max_temp, min_temp))
-            response['status'] = INVALID_INPUT_STATUS
-    except ValueError:
-        pass
-    except MultiValueDictKeyError:
-        pass
 
     if len(errors):
         response['errors'] = errors

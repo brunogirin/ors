@@ -6,7 +6,7 @@
     <script src="{% static "jquery/jquery-1.11.3.min.js" %}"></script>
   </head>
   <body>
-    <h1>Home Page - Open REST Server</h1>
+    <h1>Home Page - Open REST Server (Version 0.2)</h1>
 
     <a href="rev2-emulator">REV2 Emulator</a>
     
@@ -37,33 +37,43 @@
       </form>
     </section>
 
-    <section id="id-debug-post-section">
-      <h2>POST /api/debug</h2>
-      <form action="/api/debug" method="POST"> {% csrf_token %}
+    <section id="id-debug-section">
+      <h2>/api/debug/&lthouse code&gt</h2>
+      <form id="id-debug-form">
 	<table>
-	  <tr><td><label for="id-state-input">State:</label></td><td><input id="id-state-input" type="text" name="state" /></td></tr>
-	  <tr><td></td><td><input type="submit" value="Submit" /></td></tr>
-	</table>
-      </form>
-    </section>
-
-    <section id="id-debug-get-section">
-      <h2>GET /api/debug</h2>
-      <form action="/api/debug" method="GET">
-	<table>
-	  <tr><td><input type="submit" value="Submit" /></td></tr>
+	  <tr>
+	    <td><label for="id-house-code-input">House Code:</label></td>
+	    <td><input id="id-house-code-input" /></td>
+	    <td><input type="submit" value="Submit" /></td>
+	  </tr>
 	</table>
       </form>
     </section>
 
     <section id="id-led-section">
       <h2>POST /api/led/<code>&lthouse-code&gt</code></h2>
-      <form action="/led/house-code" method="POST"> {% csrf_token %}
+      <form id="id-led-form" method="post"> {% csrf_token %}
 	<table>
-	  <tr><td><label for="id-house-code-input">House Code:</label></td><td><input id="id-house-code-input" type="text" name="house-code" /></td></tr>
-	  <tr><td><label for="id-colour-input">Colour:</label></td><td><input id="id-colour-input" type="text"  name="colour" /></td></tr>
-	  <tr><td><label for="id-flash-input">Flash:</label></td><td><input id="id-flash-input" type="text"  name="flash" /></td></tr>
-	  <tr><td></td><td><input type="submit" value="Submit" /></td></tr>
+	  <tr>
+	    <td><label for="id-house-code-input">House Code:</label></td>
+	    <td><input id="id-house-code-input" name="house-code" /></td>
+	  </tr>
+	  <tr>
+	    <td><label for="id-colour-input">Colour Input:</label></td>
+	    <td><input id="id-colour-input" name="colour"/></td>
+	  </tr>
+	  <tr>
+	    <td><label for="id-state-input">State Input:</label></td>
+	    <td><input id="id-state-input" name="state" /></td>
+	  </tr>
+	  <tr>
+	    <td><label for="id-repeat-interval">Repeat Interval:</label></td>
+	    <td><input id="id-repeat-interval-input" name="repeat-interval" /></td>
+	  </tr>
+	  <tr>
+	    <td></td>
+	    <td><input type="submit" value="Submit" /></td>
+	  </tr>
 	</table>
       </form>
     </section>

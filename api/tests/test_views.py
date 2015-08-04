@@ -1,13 +1,16 @@
+import rev2
+import mock
 from mock import Mock, patch
 from functools import wraps
 import json
 import api.views
 from django.test import TestCase
-from api.views import api_documentation, INVALID_INPUT_STATUS, VALID_COLOURS, VALID_FLASH
+from api.views import api_documentation, INVALID_INPUT_STATUS
+from api.views import INVALID_LED_COLOUR_MSG, INVALID_LED_STATE_MSG, INVALID_LED_REPEAT_INTERVAL_MSG
+from api.views import MISSING_LED_COLOUR_MSG, MISSING_LED_STATE_MSG, MISSING_LED_REPEAT_INTERVAL_MSG
 from django.core.urlresolvers import resolve
 from api.models import HouseCode, INVALID_HOUSE_CODE_MSG, HOUSE_CODE_NOT_FOUND_MSG
 from api.forms import ValveForm
-from api.models import Debug, Led
 
 class ApiViewTest(TestCase):
 
@@ -57,126 +60,54 @@ class ApiLedTest(ApiViewTest):
         found = resolve('/api/led/house-code')
         self.assertEqual(found.func, api.views.led_view)
 
-    # TODO: Need to know that the response looks like to test it
-    def test_valid_arguments(self):
-        HouseCode.objects.create(code='FA-32')
-        response = self.client.post('/api/led/FA-32', data={'colour': '0', 'flash': '1'})
+    def test_non_existent_house_code(self):
+        response = self.client.post('/api/led/FA-32', data={})
         response = json.loads(response.content)
-        self.assertEqual(response['status'], 200)
-        with self.assertRaises(KeyError):
-            response['errors']
+        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
+        self.assertIn(HOUSE_CODE_NOT_FOUND_MSG.format('FA-32'), response['errors'])
 
-    def test_missing_arguments(self):
-        HouseCode.objects.create(code='FA-32')
+    def test_blank_colour(self):
+        hc = HouseCode.objects.create(code='FA-32')
+        response = self.client.post('/api/led/FA-32', data={'colour': ''})
+        response = json.loads(response.content)
+        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
+        self.assertIn(INVALID_LED_COLOUR_MSG.format(''), response['errors'])
+
+    def test_no_parameters(self):
+        hc = HouseCode.objects.create(code='FA-32')
         response = self.client.post('/api/led/FA-32')
         response = json.loads(response.content)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-        self.assertEqual(response['errors'], ['Required input parameter: colour', 'Required input parameter: flash'])
+        self.assertIn(MISSING_LED_COLOUR_MSG, response['errors'])
+        self.assertIn(MISSING_LED_STATE_MSG, response['errors'])
+        self.assertIn(MISSING_LED_REPEAT_INTERVAL_MSG, response['errors'])
 
-    def test_invalid_colour_argument(self):
-        HouseCode.objects.create(code='FA-32')
-        # non numeric
-        response = self.client.post('/api/led/FA-32', data={'colour': 'a', 'flash': '1'})
+    def test_blank_state(self):
+        hc = HouseCode.objects.create(code='FA-32')
+        response = self.client.post('/api/led/FA-32', data={'state': ''})
         response = json.loads(response.content)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-        self.assertEqual(response['errors'], ['Invalid input for parameter: colour. Received: a, expected: {}'.format(VALID_COLOURS)])
-        # below min
-        response = self.client.post('/api/led/FA-32', data={'colour': '-1', 'flash': '1'})
-        response = json.loads(response.content)
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-        self.assertEqual(response['errors'], ['Invalid input for parameter: colour. Received: -1, expected: {}'.format(VALID_COLOURS)])
-        # above max
-        response = self.client.post('/api/led/FA-32', data={'colour': '4', 'flash': '1'})
-        response = json.loads(response.content)
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-        self.assertEqual(response['errors'], ['Invalid input for parameter: colour. Received: 4, expected: {}'.format(VALID_COLOURS)])
+        self.assertIn(INVALID_LED_STATE_MSG.format(''), response['errors'])
 
-    def test_invalid_flash_argument(self):
-        HouseCode.objects.create(code='FA-32')
-        # non numeric
-        response = self.client.post('/api/led/FA-32', data={'colour': '0', 'flash': 'a'})
+    def test_blank_repeat_interval(self):
+        hc = HouseCode.objects.create(code='FA-32')
+        response = self.client.post('/api/led/FA-32', data={'repeat-interval': ''})
         response = json.loads(response.content)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-        self.assertEqual(response['errors'], ['Invalid input for parameter: flash. Received: a, expected: {}'.format(VALID_FLASH)])
-        # not matched
-        response = self.client.post('/api/led/FA-32', data={'colour': '0', 'flash': '20'})
-        response = json.loads(response.content)
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-        self.assertEqual(response['errors'], ['Invalid input for parameter: flash. Received: 20, expected: {}'.format(VALID_FLASH)])
-
-    def test_setting_attributes(self):
-        HouseCode.objects.create(code='FA-32')
-        Led.objects.create(colour=0, flash=1)
-        response = self.client.post('/api/led/FA-32', data={'colour': '1', 'flash': '2'})
-        response = json.loads(response.content)
-        self.assertEqual(response['status'], 200)
-        self.assertEqual(Led.objects.first().colour, 1) # colour
-        self.assertEqual(Led.objects.first().flash, 2) # flash
-
-    def test_changing_state_does_not_add_more_debug_objects(self):
-        HouseCode.objects.create(code='FA-32')
-        Led.objects.create(colour=0, flash=1)
-        self.client.post('/api/led/FA-32', data={'colour': '1', 'flash': '2'})
-        self.client.post('/api/led/FA-32', data={'colour': '3', 'flash': '4'})
-        self.assertEqual(Led.objects.count(), 1)
+        self.assertIn(INVALID_LED_REPEAT_INTERVAL_MSG.format(''), response['errors'])
 
 class ApiDebugTest(ApiViewTest):
 
     def test_api_url_resolves(self):
-        found = resolve('/api/debug')
+        found = resolve('/api/debug/FA-32')
         self.assertEqual(found.func, api.views.debug_view)
-    
-    def test_missing_arguments_returns_error(self):
-        response = self.client.post('/api/debug')
+
+    def test_non_existent_house_code(self):
+        response = self.client.post('/api/debug/FA-32')
         response = json.loads(response.content)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-        self.assertEqual(response['errors'], ['Required input parameter: state'])
-
-    def test_invalid_arguments_returns_error(self):
-        response = self.client.post('/api/debug', data={'state': 'ON'})
-        response = json.loads(response.content)
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-        self.assertEqual(response['errors'], ['Invalid input for parameter: state. Received: ON, expected: on/off'])
-
-    def test_post_state_on_turns_debug_on(self):
-        self.client.post('/api/debug', data={'state': 'on'})
-        self.assertEqual(Debug.objects.first().state, 'on')
-
-    def test_post_state_off_turns_debug_off(self):
-        self.client.post('/api/debug', data={'state': 'off'})
-        self.assertEqual(Debug.objects.first().state, 'off')
-
-    def test_changing_state_does_not_add_more_debug_objects(self):
-        self.client.post('/api/debug', data={'state': 'on'})
-        self.client.post('/api/debug', data={'state': 'off'})
-        self.assertEqual(Debug.objects.count(), 1)
-
-    def test_changing_state(self):
-        self.client.post('/api/debug', data={'state': 'on'})
-        self.assertEqual(Debug.objects.first().state, 'on')
-        self.client.post('/api/debug', data={'state': 'off'})
-        self.assertEqual(Debug.objects.first().state, 'off')
-
-    def test_get_returns_default(self):
-        response = self.client.get('/api/debug')
-        response = json.loads(response.content)
-        self.assertEqual(response['status'], 200)
-        self.assertEqual(response['content'], 'off')
-
-    def test_get_on(self):
-        Debug.objects.create(state="on")
-        response = self.client.get('/api/debug')
-        response = json.loads(response.content)
-        self.assertEqual(response['status'], 200)
-        self.assertEqual(response['content'], 'on')
-
-    def test_get_off(self):
-        Debug.objects.create(state="off")
-        response = self.client.get('/api/debug')
-        response = json.loads(response.content)
-        self.assertEqual(response['status'], 200)
-        self.assertEqual(response['content'], 'off')
-
+        self.assertIn(HOUSE_CODE_NOT_FOUND_MSG.format('FA-32'), response['errors'])
+        
 class ApiValveTest(ApiViewTest):
 
     def test_api_url_resolves_valve(self):
@@ -237,88 +168,6 @@ class ApiValveTest(ApiViewTest):
         errors = response['errors']
         self.assertEqual(errors, ["Invalid input for parameter: open_input. Received: a, expected: 0-100"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-        
-    def test_min_temp_input(self):
-        # not provided
-        HouseCode.objects.create(code="FA-32")
-        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', 'max_temp': '20'})
-        response = json.loads(response.content)
-        errors = response['errors']
-        self.assertEqual(errors, ["Required input parameter: min_temp"])
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-
-        # empty
-        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '', 'max_temp': '20'})
-        response = json.loads(response.content)
-        errors = response['errors']
-        self.assertEqual(errors, ["Invalid input for parameter: min_temp. Received: , expected: 7-28"])
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-
-        # below min
-        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '6', 'max_temp': '20'})
-        response = json.loads(response.content)
-        errors = response['errors']
-        self.assertEqual(errors, ["Invalid input for parameter: min_temp. Received: 6, expected: 7-28"])
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-
-        # above max
-        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '29', 'max_temp': '20'})
-        response = json.loads(response.content)
-        errors = response['errors']
-        self.assertIn("Invalid input for parameter: min_temp. Received: 29, expected: 7-28", errors)
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-
-        # non int
-        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": 'a', 'max_temp': '20'})
-        response = json.loads(response.content)
-        errors = response['errors']
-        self.assertEqual(errors, ["Invalid input for parameter: min_temp. Received: a, expected: 7-28"])
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-
-    def test_max_temp_input(self):
-        # not provided
-        HouseCode.objects.create(code="FA-32")
-        response = self.client.post('/api/valve/FA-32', data={"open_input": '50', "min_temp": '7'})
-        response = json.loads(response.content)
-        errors = response['errors']
-        self.assertEqual(errors, ["Required input parameter: max_temp"])
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-
-        # empty
-        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '7', 'max_temp': ''})
-        response = json.loads(response.content)
-        errors = response['errors']
-        self.assertEqual(errors, ["Invalid input for parameter: max_temp. Received: , expected: 7-28"])
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-
-        # below min
-        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '7', 'max_temp': '6'})
-        response = json.loads(response.content)
-        errors = response['errors']
-        self.assertIn("Invalid input for parameter: max_temp. Received: 6, expected: 7-28", errors)
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-
-        # above max
-        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '7', 'max_temp': '29'})
-        response = json.loads(response.content)
-        errors = response['errors']
-        self.assertIn("Invalid input for parameter: max_temp. Received: 29, expected: 7-28", errors)
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-
-        # non int
-        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '7', 'max_temp': 'a'})
-        response = json.loads(response.content)
-        errors = response['errors']
-        self.assertIn("Invalid input for parameter: max_temp. Received: a, expected: 7-28", errors)
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
-
-    def test_max_temp_greater_than_min_temp(self):
-        HouseCode.objects.create(code="FA-32")
-        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', 'min_temp': '20', 'max_temp': '20'})
-        response = json.loads(response.content)
-        errors = response['errors']
-        self.assertEqual(errors, ["Invalid input for parameter: max_temp. max_temp (20) must be greater than min_temp (20)"])
-        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
 class ApiDocumentationTest(TestCase):
 
@@ -339,8 +188,19 @@ class ApiHouseCodesTest(ApiViewTest):
     def test_invalid_format(self):
         response = self.client.post("/api/house-codes", data={"house-codes": "WX-YZ"})
         response = json.loads(response.content)
-        self.assertEqual(response['errors'], ["Invalid house-code. Recieved: WX-YZ, expected XX-XX where XX are uppercase hex numbers"])
+        self.assertEqual(response['errors'], ['Invalid input for "house-code". Recieved: WX-YZ, expected XX-XX where XX are uppercase hex numbers'])
         self.assertEqual(response['content'], [])
+
+    @patch('api.models.HouseCode.poll', autospec=True)
+    def test_POST_initialises_cache(self, mock_poll):
+        def side_effect(self):
+            self.relative_humidity = 50
+        mock_poll.side_effect = side_effect
+        response = self.client.post('/api/house-codes', data={'house-codes': 'FA-32'})
+        response = self.client.get('/api/status/FA-32')
+        response = json.loads(response.content)
+        response = response['content']
+        self.assertEqual(response['relative-humidity'], 50)
 
     def test_POST_blank_does_not_save(self):
         self.client.post("/api/house-codes", data={"house-codes": ""})
@@ -349,7 +209,7 @@ class ApiHouseCodesTest(ApiViewTest):
     def test_POST_blank_returns_error(self):
         response = json.loads(self.client.post("/api/house-codes", data={"house-codes": ""}).content)
         self.assertIn("errors", response)
-        self.assertIn("Invalid house-code. Recieved: , expected XX-XX where XX are uppercase hex numbers", response["errors"])
+        self.assertIn('Invalid input for "house-code". Recieved: , expected XX-XX where XX are uppercase hex numbers', response["errors"])
 
     def test_POST_saves_a_house_code(self):
         response = self.client.post("/api/house-codes", data={"house-codes": "FA-32"})

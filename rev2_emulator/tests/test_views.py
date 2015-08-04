@@ -2,12 +2,13 @@ import collections
 import json
 import datetime
 import rev2_emulator.views
+import api.models
 from django.utils import timezone
 from django.test import TestCase
 from django.core.urlresolvers import resolve
 from django.http import HttpResponse, JsonResponse
 from api.models import HouseCode
-
+from api.views import INVALID_INPUT_STATUS
 # Create your tests here.
 
 class GetStatusesTest(TestCase):
@@ -58,6 +59,14 @@ class TemperatureOpentrvViewTest(TestCase):
         hc = HouseCode.objects.first()
         self.assertEqual(hc.temperature_opentrv, '10.123')
 
+    def test_alphabetical_input(self):
+        hc = HouseCode.objects.create(code='FA-32')
+        data = {'house-code': hc.code, 'temperature-opentrv': 'asdf'}
+        response = self.client.post('/rev2-emulator/temperature-opentrv', data=data)
+        response = json.loads(response.content)
+        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
+        self.assertEqual(response['errors'], [api.models.INVALID_TEMPERATURE_OPENTRV_MSG.format('asdf')])
+        
 class TemperatureDs18b20ViewTest(TestCase):
 
     def test_url(self):

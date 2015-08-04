@@ -211,13 +211,15 @@ class ApiHouseCodesTest(ApiViewTest):
         self.assertIn("errors", response)
         self.assertIn('Invalid input for "house-code". Recieved: , expected XX-XX where XX are uppercase hex numbers', response["errors"])
 
-    def test_POST_saves_a_house_code(self):
+    @patch('api.models.HouseCode.poll', autospec=True)
+    def test_POST_saves_a_house_code(self, mock_poll):
         response = self.client.post("/api/house-codes", data={"house-codes": "FA-32"})
         self.assertEqual(HouseCode.objects.count(), 1)
         house_code = HouseCode.objects.first()
         self.assertEqual(house_code.code, "FA-32")
 
-    def test_POST_can_save_multiple_house_codes(self):
+    @patch('api.models.HouseCode.poll', autospec=True)
+    def test_POST_can_save_multiple_house_codes(self, mock_poll):
         response = self.client.post("/api/house-codes", data={"house-codes": " FA-32, E2-E1,45-40"}) 
         self.assertEqual(HouseCode.objects.count(), 3)
         iter = HouseCode.objects.iterator()
@@ -228,7 +230,8 @@ class ApiHouseCodesTest(ApiViewTest):
         self.assertEqual(housecode2.code, "E2-E1")
         self.assertEqual(housecode3.code, "45-40")
 
-    def test_POST_overwrites_existing_house_codes(self):
+    @patch('api.models.HouseCode.poll', autospec=True)
+    def test_POST_overwrites_existing_house_codes(self, mock_poll):
         response = self.client.post("/api/house-codes", data={"house-codes": "FA-32, E2-E1, 45-40"}) 
         response = self.client.post("/api/house-codes", data={"house-codes": "FA-33, E2-E2, 45-41"}) 
         self.assertEqual(HouseCode.objects.count(), 3)
@@ -250,7 +253,8 @@ class ApiHouseCodesTest(ApiViewTest):
         house_codes = json.loads(response.content)['content']
         self.assertIn('HouseCode', house_codes)
 
-    def test_POST_replacing_same_housecode_does_not_raise_error(self):
+    @patch('api.models.HouseCode.poll', autospec=True)
+    def test_POST_replacing_same_housecode_does_not_raise_error(self, mock_poll):
         response = self.client.post('/api/house-codes', data={'house-codes': 'FA-32'})
         response = self.client.post('/api/house-codes', data={'house-codes': 'FA-32, E2-E1'})
         response = json.loads(response.content)

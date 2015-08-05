@@ -36,6 +36,7 @@ def status_view(request, house_code):
     
     return JsonResponse(response)
 
+@csrf_exempt
 def led_view(request, house_code):
     response = {'status': 200, 'content': None}
     errors = []
@@ -154,10 +155,12 @@ def house_codes(request):
 
         return JsonResponse(response)
 
+@csrf_exempt
 def valve_view_redirect(request):
     house_code = request.POST['house_code']
     return valve_view(request, house_code)
 
+@csrf_exempt
 def valve_view(request, house_code):
 
     response = {'status': 200, 'content': None}

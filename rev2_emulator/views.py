@@ -26,6 +26,7 @@ def temperature_is_valid(temperature):
 def emulator_view(request):
     return render(request, 'rev2_emulator/home.html')
 
+@csrf_exempt
 def relative_humidity_view(request):
     response = {'status': 200, 'content': None}
     try:
@@ -42,6 +43,7 @@ def relative_humidity_view(request):
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(request.POST['house-code'])]
     return JsonResponse(response)
 
+@csrf_exempt
 def temperature_opentrv_view(request):
     response = {'status': 200, 'content': None}
     try:
@@ -58,6 +60,7 @@ def temperature_opentrv_view(request):
         
     return JsonResponse(response)
         
+@csrf_exempt
 def temperature_ds18b20_view(request):
     response = {'status': 200, 'content': None}
     try:
@@ -73,6 +76,7 @@ def temperature_ds18b20_view(request):
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(request.POST['house-code'])]
     return JsonResponse(response)
 
+@csrf_exempt
 def window_view(request):
     response = {'status': 200, 'content': None}
     try:
@@ -89,6 +93,7 @@ def window_view(request):
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(request.POST['house-code'])]
     return JsonResponse(response)
 
+@csrf_exempt
 def switch_view(request):
     response = {'status': 200, 'content': None}
     try:
@@ -105,6 +110,7 @@ def switch_view(request):
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(request.POST['house-code'])]
     return JsonResponse(response)
 
+@csrf_exempt
 def last_updated_all_view(request):
     response = {'status': 200, 'content': None}
     try:
@@ -121,6 +127,7 @@ def last_updated_all_view(request):
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(request.POST['house-code'])]
     return JsonResponse(response)
 
+@csrf_exempt
 def last_updated_temperature_view(request):
     response = {'status': 200, 'content': None}
     try:
@@ -137,6 +144,7 @@ def last_updated_temperature_view(request):
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(request.POST['house-code'])]
     return JsonResponse(response)
 
+@csrf_exempt
 def synchronising_view(request):
     response = {'status': 200, 'content': None}
     try:
@@ -153,6 +161,7 @@ def synchronising_view(request):
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(request.POST['house-code'])]
     return JsonResponse(response)
 
+@csrf_exempt
 def ambient_light_view(request):
     response = {'status': 200, 'content': None}
     try:

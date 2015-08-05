@@ -1,3 +1,4 @@
+import api.models
 from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
@@ -6,6 +7,21 @@ from django.utils.datastructures import MultiValueDictKeyError
 from api.views import INVALID_INPUT_STATUS
 from api.models import HOUSE_CODE_NOT_FOUND_MSG
 # Create your views here.
+
+def temperature_is_valid(temperature):
+    try:
+        if len(temperature) > 6:
+            raise ValidationError('')
+        if "." in temperature:
+            (x, y) = temperature.split(".")
+            if(len(y) > 3):
+                raise ValidationError('')
+        temperature = float(temperature)
+        if temperature < 0 or temperature > 99.999:
+            raise ValidationError('')
+        return True
+    except (ValueError, ValidationError) as e:
+        return False
 
 def emulator_view(request):
     return render(request, 'rev2_emulator/home.html')
@@ -30,29 +46,28 @@ def temperature_opentrv_view(request):
     response = {'status': 200, 'content': None}
     try:
         hc = HouseCode.objects.get(code=request.POST['house-code'])
-        hc.temperature_opentrv = request.POST['temperature-opentrv']
-        try:
-            hc.full_clean()
+        if temperature_is_valid(request.POST['temperature-opentrv']):
+            hc.temperature_opentrv = float(request.POST['temperature-opentrv'])
             hc.save()
-        except ValidationError as e:
+        else:
             response['status'] = INVALID_INPUT_STATUS
-            response['errors'] = e.message_dict['temperature_opentrv']
+            response['errors'] = [api.models.INVALID_TEMPERATURE_OPENTRV_MSG.format(request.POST['temperature-opentrv'])]
     except HouseCode.DoesNotExist:
         response['status'] = INVALID_INPUT_STATUS
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(request.POST['house-code'])]
+        
     return JsonResponse(response)
         
 def temperature_ds18b20_view(request):
     response = {'status': 200, 'content': None}
     try:
         hc = HouseCode.objects.get(code=request.POST['house-code'])
-        hc.temperature_ds18b20 = request.POST['temperature-ds18b20']
-        try:
-            hc.full_clean()
+        if temperature_is_valid(request.POST['temperature-ds18b20']):
+            hc.temperature_ds18b20 = float(request.POST['temperature-ds18b20'])
             hc.save()
-        except ValidationError as e:
+        else:
             response['status'] = INVALID_INPUT_STATUS
-            response['errors'] = e.message_dict['temperature_ds18b20']
+            response['errors'] = [api.models.INVALID_TEMPERATURE_DS18B20_MSG.format(request.POST['temperature-ds18b20'])]
     except HouseCode.DoesNotExist:
         response['status'] = INVALID_INPUT_STATUS
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(request.POST['house-code'])]

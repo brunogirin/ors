@@ -283,14 +283,14 @@ class Rev2EmulatorTest(FunctionalTest):
         self.house_code_input.send_keys('FA-32')
         self.temperature_opentrv_input.send_keys('23.233\n')
         # # user then waits for the temperature to update
-        self.wait_for_attribute_in_cache('FA-32', 'temperature-opentrv', '23.233')
+        self.wait_for_attribute_in_cache('FA-32', 'temperature-opentrv', 23.233)
         # user updates the rest of the variables
         # relative_humidity
         self.relative_humidity_input.send_keys('50\n')
         self.wait_for_attribute_in_cache('FA-32', 'relative-humidity', 50)
         # temperature_ds18b20
         self.temperature_ds18b20_input.send_keys('25.333\n')
-        self.wait_for_attribute_in_cache('FA-32', 'temperature-ds18b20', '25.333')
+        self.wait_for_attribute_in_cache('FA-32', 'temperature-ds18b20', 25.333)
         # window
         self.window_input.send_keys('open')
         self.window_form.submit()

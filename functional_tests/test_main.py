@@ -34,6 +34,7 @@ class StatusTest(FunctionalTest):
         self.button = self.section.find_element_by_css_selector('input[type="submit"]')
 
     def test_main(self):
+        ''' Add a house code code and get the status of it '''
         self.initialise_page()
         h2 = self.section.find_element_by_tag_name('h2')
         self.assertEqual(h2.text, 'POST /api/status/<house-code>')
@@ -98,6 +99,7 @@ class LedTest(FunctionalTest):
         print json_response
         
         # TODO: User needs to be able to see the result
+        # Currently the LED post does not affect the cache and is just a dummy function
 
         # user reloads api page
         # user inputs non existent house code

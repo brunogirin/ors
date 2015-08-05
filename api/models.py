@@ -29,8 +29,8 @@ HOUSE_CODE_NOT_FOUND_MSG = "house-code not found: {}"
 class HouseCode(models.Model):
     code = models.CharField(primary_key=True, max_length=5)
     relative_humidity = models.IntegerField(choices=[(i, i) for i in VALID_RELATIVE_HUMIDITIES], default=None, null=True, blank=True)
-    temperature_opentrv = models.CharField(max_length=6, default=None, null=True, blank=True)
-    temperature_ds18b20 = models.CharField(max_length=6, default=None, null=True, blank=True)
+    temperature_opentrv = models.FloatField(default=None, null=True, blank=True)
+    temperature_ds18b20 = models.FloatField(default=None, null=True, blank=True)
     window = models.CharField(max_length=6, choices=[(i, i) for i in VALID_WINDOW_STATES], default=None, null=True, blank=True)
     switch = models.CharField(max_length=3, choices=[(i, i) for i in VALID_SWITCH_STATES], default=None, null=True, blank=True)
     last_updated_all = models.DateTimeField(default=None, null=True, blank=True)
@@ -52,34 +52,12 @@ class HouseCode(models.Model):
         except (IndexError, AssertionError, ValueError) as e:
             return False
 
-    @staticmethod
-    def temperature_is_valid(temperature):
-        try:
-            if temperature == None:
-                return True
-            if len(temperature) > 6:
-                raise ValidationError('')
-            if "." in temperature:
-                (x, y) = temperature.split(".")
-                if(len(y) > 3):
-                    raise ValidationError('')
-            temperature = float(temperature)
-            if temperature < 0 or temperature > 99.999:
-                raise ValidationError('')
-            return True
-        except (ValueError, ValidationError) as e:
-            return False
-
     def clean(self, *args, **kwargs):
         if not self.is_valid_format():
             raise ValidationError({'code': INVALID_HOUSE_CODE_MSG.format(self.code)})
         if self.relative_humidity != None:
             if self.relative_humidity not in VALID_RELATIVE_HUMIDITIES:
                 raise ValidationError({'relative_humidity': INVALID_RELATIVE_HUMIDITY_MSG.format(self.relative_humidity)})
-        if not self.temperature_is_valid(self.temperature_opentrv):
-            raise ValidationError({'temperature_opentrv': INVALID_TEMPERATURE_OPENTRV_MSG.format(self.temperature_opentrv)})
-        if not self.temperature_is_valid(self.temperature_ds18b20):
-            raise ValidationError({'temperature_ds18b20': INVALID_TEMPERATURE_DS18B20_MSG.format(self.temperature_ds18b20)})
         if self.window != None:
             if self.window not in VALID_WINDOW_STATES:
                 raise ValidationError({'window': INVALID_WINDOW_STATE_MSG.format(self.window)})

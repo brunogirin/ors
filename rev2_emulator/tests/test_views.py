@@ -31,11 +31,10 @@ class GetStatusesTest(TestCase):
 
     def test_multiple_house_code_objects(self):
         hc1 = HouseCode.objects.create(code='FA-32')
-        hc2 = HouseCode.objects.create(code='EE-EE', temperature_opentrv='23.333')
+        hc2 = HouseCode.objects.create(code='EE-EE', temperature_opentrv=23.333)
         response = self.client.get('/rev2-emulator/get-statuses')
         response = json.JSONDecoder(object_pairs_hook=collections.OrderedDict).decode(response.content)
         self.assertEqual([hc1.to_dict(), hc2.to_dict()], response['content'])
-        
 
 class EmulatorViewTest(TestCase):
 
@@ -57,7 +56,7 @@ class TemperatureOpentrvViewTest(TestCase):
         hc = HouseCode.objects.create(code="FA-32")
         response = self.client.post('/rev2-emulator/temperature-opentrv', data={'house-code': 'FA-32', 'temperature-opentrv': '10.123'})
         hc = HouseCode.objects.first()
-        self.assertEqual(hc.temperature_opentrv, '10.123')
+        self.assertEqual(hc.temperature_opentrv, 10.123)
 
     def test_alphabetical_input(self):
         hc = HouseCode.objects.create(code='FA-32')
@@ -66,6 +65,15 @@ class TemperatureOpentrvViewTest(TestCase):
         response = json.loads(response.content)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
         self.assertEqual(response['errors'], [api.models.INVALID_TEMPERATURE_OPENTRV_MSG.format('asdf')])
+
+    def test_invalid_precision(self):
+        hc = HouseCode.objects.create(code='FA-32')
+        data = {'house-code': hc.code, 'temperature-opentrv': '12.22223'}
+        response = self.client.post('/rev2-emulator/temperature-opentrv', data=data)
+        response = json.loads(response.content)
+        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
+        self.assertEqual(response['errors'], [api.models.INVALID_TEMPERATURE_OPENTRV_MSG.format('12.22223')])
+        
         
 class TemperatureDs18b20ViewTest(TestCase):
 
@@ -77,8 +85,24 @@ class TemperatureDs18b20ViewTest(TestCase):
         hc = HouseCode.objects.create(code="FA-32")
         response = self.client.post('/rev2-emulator/temperature-ds18b20', data={'house-code': 'FA-32', 'temperature-ds18b20': '10.123'})
         hc = HouseCode.objects.first()
-        self.assertEqual(hc.temperature_ds18b20, '10.123')
+        self.assertEqual(hc.temperature_ds18b20, 10.123)
 
+    def test_alphabetical_input(self):
+        hc = HouseCode.objects.create(code='FA-32')
+        data = {'house-code': hc.code, 'temperature-ds18b20': 'asdf'}
+        response = self.client.post('/rev2-emulator/temperature-ds18b20', data=data)
+        response = json.loads(response.content)
+        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
+        self.assertEqual(response['errors'], [api.models.INVALID_TEMPERATURE_DS18B20_MSG.format('asdf')])
+
+    def test_invalid_precision(self):
+        hc = HouseCode.objects.create(code='FA-32')
+        data = {'house-code': hc.code, 'temperature-ds18b20': '12.22223'}
+        response = self.client.post('/rev2-emulator/temperature-ds18b20', data=data)
+        response = json.loads(response.content)
+        self.assertEqual(response['status'], INVALID_INPUT_STATUS)
+        self.assertEqual(response['errors'], [api.models.INVALID_TEMPERATURE_DS18B20_MSG.format('12.22223')])
+        
 class SwitchViewTest(TestCase):
 
     def test_url(self):

@@ -29,7 +29,19 @@ $(document).ready(function(){
 	var houseCodeInput = valveForm.find("input#id-house-code-input");
 	this.setAttribute("action", "/api/valve/" + houseCodeInput.val());
     });
-    
+
+    // Experimenting with passing json in the request for the post house codes api call
+    // var postHouseCodesSection = $("section#id-post-house-codes-section");
+    // var postHouseCodesForm = postHouseCodesSection.find("form");
+    // postHouseCodesForm.submit(function(e){
+    // 	e.preventDefault();
+    // 	var houseCodesStr = postHouseCodesForm.find("#id-house-codes-input").val();
+    // 	console.log("houseCodesStr: " + houseCodesStr);
+    // 	var houseCodes = houseCodesStr.split(',');
+    // 	console.log("houseCodes: " + houseCodes);
+    // 	console.log(houseCodes.length);
+    // 	document.body = houseCodes;
+    // });
     
 });
 

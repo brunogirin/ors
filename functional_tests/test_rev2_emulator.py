@@ -315,6 +315,18 @@ class Rev2EmulatorTest(FunctionalTest):
         self.ambient_light_input.send_keys('50\n')
         self.wait_for_attribute_in_cache('FA-32', 'ambient-light', 50)
 
+    def test_switch_switches_off_after_shown_as_on_in_the_cache(self):
+
+        # user goes to the api page and enters a house code
+        self.post_house_code('FA-32')
+        # user then goes to the rev2 emulator pages to check it's there
+        self.initialise_page()
+        self.house_code_input.send_keys('FA-32')
+        self.switch_input.send_keys('on')
+        self.switch_form.submit()
+        self.wait_for_attribute_in_cache('FA-32', 'switch', 'on')
+        # the next time the cache updates the switch should be off
+        self.wait_for_attribute_in_cache('FA-32', 'switch', 'off')
         
     def wait_for_attribute_in_cache(self, code, name, value, timeout=10):
 

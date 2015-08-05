@@ -183,4 +183,7 @@ def get_statuses(request):
     response = {'content': [], 'status': 200}
     for hc in HouseCode.objects.all():
         response['content'] += [hc.to_dict()]
+        if hc.switch == 'on':
+            hc.switch = 'off'
+            hc.save()
     return JsonResponse(response)

@@ -124,3 +124,5 @@ LOGGING = {
         },
     'root': {'level': 'INFO'},
     }
+
+EMULATE_REV2 = True

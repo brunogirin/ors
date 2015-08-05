@@ -38,38 +38,6 @@ class HouseCode(models.Model):
     synchronising = models.CharField(max_length=3, choices=[(i, i) for i in VALID_SYNCHRONISING_STATES], default=None, null=True, blank=True)
     ambient_light = models.IntegerField(choices=[(i, i) for i in VALID_AMBIENT_LIGHT_VALUES], default=None, null=True, blank=True)
 
-    def poll(self): # TODO: Perhaps this method should be in the REV2 module?
-        start_time = datetime.datetime.now()
-        timeout = datetime.timedelta(seconds=10)
-        regex = "'\*' (?P<house_code>[\w\-\d]+) [\w\-\d]+ (?P<window>\w+)\|(?P<switch>\w+)\|1\+(?P<relative_humidity>\d+) 1\+(?P<temperature_ds18b20>\d+) 1\+(?P<temperature_opentrv>\d+) (?P<synchronising>\w+)\|(?P<ambient_light>\d+)\|0 nzcrc"
-        rev2_conn = rev2.connect_to_rev2()
-        while True:
-            line = rev2_conn.readline()
-            if line.startswith('>'):
-                time.sleep(1.)
-                rev2_conn.write('S\n') # TODO: write the poll and poll sequence to trigger a poll response
-                break
-            if datetime.datetime.now() - start_time > timeout:
-                raise Exception('Timeout: No response from REV2, did not see input prompt')
-        while True:
-            line = rev2_conn.readline()
-            if line.startswith("'*'"):
-                m = re.search(regex, line)
-                house_code = m.group('house_code')
-                if house_code == self.code:
-                    break
-            if datetime.datetime.now() - start_time > timeout:
-                raise Exception('Timeout: No response from REV2: did not see a poll response')
-        self.relative_humidity = int(m.group('relative_humidity')) * 2
-        self.temperature_opentrv = '{:.3f}'.format(float(m.group('temperature_opentrv')) * 0.5)
-        self.temperature_ds18b20 = '{:.3f}'.format(float(m.group('temperature_ds18b20')) * 0.25)
-        self.window = {'false': 'closed', 'true': 'open'}[m.group('window')]
-        self.switch = {'false': 'off', 'true': 'on'}[m.group('switch')]
-        self.last_updated_all = datetime.datetime.now()
-        self.last_updated_temperature = datetime.datetime.now()
-        self.synchronising = {'false': 'off', 'true': 'on'}[m.group('synchronising')]
-        self.ambient_light = int(round(1 + 1. * 254 / 61 * (int(m.group('ambient_light')) - 1)))
-        
     def __str__(self):
         return str(self.code)
 

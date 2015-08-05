@@ -1,3 +1,4 @@
+import rev2
 import json
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
@@ -142,7 +143,7 @@ def house_codes(request):
 
         HouseCode.objects.all().delete()
         for house_code in house_codes:
-            house_code.poll()
+            rev2.poll(house_code)
             house_code.save()
 
         response = {}

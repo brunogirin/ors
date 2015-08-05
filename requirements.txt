@@ -3,3 +3,4 @@ gunicorn==19.3.0
 python-dateutil==2.4.2
 
 pyserial==2.7
+mock==1.2.0

@@ -254,6 +254,9 @@ class ValveTest(FunctionalTest):
     
 class HouseCodeTest(FunctionalTest):
 
+    # TODO: Write test for posting house codes by using a request with content-type of "application/json"
+    # This should pass a json object with has a house-codes attribute which is an array of house code strings
+
     def test_house_codes(self):
         
         # Open site

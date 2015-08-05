@@ -110,7 +110,10 @@ def house_codes(request):
         house_codes = [house_code.code for house_code in HouseCode.objects.all()]
         return HttpResponse(json.dumps({"content": house_codes, "status": 200}), content_type="application/json")
     else:
-        house_code_strings = [hc.strip() for hc in request.POST['house-codes'].split(',')]
+        if request.META['CONTENT_TYPE'] == 'application/json':
+            house_code_strings = json.loads(request.body)['house-codes']
+        else:
+            house_code_strings = [hc.strip() for hc in request.POST['house-codes'].split(',')]
         house_codes = []
         warnings = []
         errors = []

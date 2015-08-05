@@ -127,7 +127,7 @@ class ApiValveTest(ApiViewTest):
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
     def test_non_existant_house_code_returns_error(self):
-        response = self.client.post('/api/valve/FA-32', data={'open_input': '50', "min_temp": '7', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open': '50', "min_temp": '7', 'max_temp': '20'})
         response = json.loads(response.content)
         self.assertEqual(response['errors'], [HOUSE_CODE_NOT_FOUND_MSG.format('FA-32')])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
@@ -138,35 +138,35 @@ class ApiValveTest(ApiViewTest):
         response = self.client.post('/api/valve/FA-32', data={"min_temp": '7', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
-        self.assertEqual(errors, ["Required input parameter: open_input"])
+        self.assertEqual(errors, ["Required input parameter: open"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # empty
-        response = self.client.post('/api/valve/FA-32', data={'open_input': '', "min_temp": '7', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open': '', "min_temp": '7', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
-        self.assertEqual(errors, ["Invalid input for parameter: open_input. Received: , expected: 0-100"])
+        self.assertEqual(errors, ["Invalid input for parameter: open. Received: , expected: 0-100"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # below min
-        response = self.client.post('/api/valve/FA-32', data={'open_input': '-1', "min_temp": '7', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open': '-1', "min_temp": '7', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
-        self.assertEqual(errors, ["Invalid input for parameter: open_input. Received: -1, expected: 0-100"])
+        self.assertEqual(errors, ["Invalid input for parameter: open. Received: -1, expected: 0-100"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # above max
-        response = self.client.post('/api/valve/FA-32', data={'open_input': '101', "min_temp": '7', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open': '101', "min_temp": '7', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
-        self.assertEqual(errors, ["Invalid input for parameter: open_input. Received: 101, expected: 0-100"])
+        self.assertEqual(errors, ["Invalid input for parameter: open. Received: 101, expected: 0-100"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
         # non int
-        response = self.client.post('/api/valve/FA-32', data={'open_input': 'a', "min_temp": '7', 'max_temp': '20'})
+        response = self.client.post('/api/valve/FA-32', data={'open': 'a', "min_temp": '7', 'max_temp': '20'})
         response = json.loads(response.content)
         errors = response['errors']
-        self.assertEqual(errors, ["Invalid input for parameter: open_input. Received: a, expected: 0-100"])
+        self.assertEqual(errors, ["Invalid input for parameter: open. Received: a, expected: 0-100"])
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
 
 class ApiDocumentationTest(TestCase):

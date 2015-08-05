@@ -230,7 +230,7 @@ class ValveTest(FunctionalTest):
         x = self.TestParameterSet()
         x.inputs.house_code = 'FA-32'
         x.inputs.open_input = ''
-        x.expected_errors = ['Invalid input for parameter: open_input. Received: , expected: 0-100']
+        x.expected_errors = ['Invalid input for parameter: open. Received: , expected: 0-100']
         x.expected_status_code = INVALID_INPUT_STATUS
         test_parameter_sets += [x]
 
@@ -239,14 +239,14 @@ class ValveTest(FunctionalTest):
         x.inputs.house_code = 'FA-32'
         x.inputs.open_input = "-1"
         x.expected_status_code = INVALID_INPUT_STATUS
-        x.expected_errors = ["Invalid input for parameter: open_input. Received: -1, expected: 0-100"]
+        x.expected_errors = ["Invalid input for parameter: open. Received: -1, expected: 0-100"]
         test_parameter_sets += [x]
         # open outside range - above max
         x = self.TestParameterSet()
         x.inputs.house_code = 'FA-32'
         x.inputs.open_input = "101"
         x.expected_status_code = INVALID_INPUT_STATUS
-        x.expected_errors = ["Invalid input for parameter: open_input. Received: 101, expected: 0-100"]
+        x.expected_errors = ["Invalid input for parameter: open. Received: 101, expected: 0-100"]
         test_parameter_sets += [x]
 
         for parameter_set in test_parameter_sets:

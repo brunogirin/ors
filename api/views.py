@@ -176,15 +176,15 @@ def valve_view(request, house_code):
         return JsonResponse(response)
 
     try:
-        open_input = data['open_input']
+        open_input = data['open']
         open_input = int(open_input)
         if open_input < 0 or open_input > 100:
             raise ValueError()
     except ValueError:
-        errors.append('Invalid input for parameter: open_input. Received: {}, expected: 0-100'.format(open_input))
+        errors.append('Invalid input for parameter: open. Received: {}, expected: 0-100'.format(open_input))
         response['status'] = INVALID_INPUT_STATUS
     except MultiValueDictKeyError:
-        errors.append('Required input parameter: open_input')
+        errors.append('Required input parameter: open')
         response['status'] = INVALID_INPUT_STATUS
 
     if len(errors):

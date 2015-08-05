@@ -6,6 +6,7 @@ from api.models import HouseCode
 from django.utils.datastructures import MultiValueDictKeyError
 from api.views import INVALID_INPUT_STATUS
 from api.models import HOUSE_CODE_NOT_FOUND_MSG
+from django.views.decorators.csrf import csrf_exempt
 # Create your views here.
 
 def temperature_is_valid(temperature):

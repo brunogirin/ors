@@ -1,3 +1,4 @@
+import django
 import rev2
 import json
 from django.shortcuts import render, redirect
@@ -139,6 +140,14 @@ def house_codes(request):
                     house_codes += [house_code]
                 else:
                     errors.extend(e.message_dict['code'])
+            request2 = django.http.HttpRequest()
+            request2.POST['open'] = 30
+            valve_view(request2, house_code.code)
+            request2 = django.http.HttpRequest()
+            request2.POST['colour'] = 0
+            request2.POST['state'] = 0
+            request2.POST['repeat-interval'] = 30
+            led_view(request2, house_code.code)
 
         # return error if there are invalid house codes, empty house codes only return a warning
         if(len(errors)):
@@ -183,6 +192,7 @@ def valve_view(request, house_code):
         open_input = int(open_input)
         if open_input < 0 or open_input > 100:
             raise ValueError()
+        rev2.Rev2Interface().open_valve(open=open_input)
     except ValueError:
         errors.append('Invalid input for parameter: open. Received: {}, expected: 0-100'.format(open_input))
         response['status'] = INVALID_INPUT_STATUS
@@ -192,5 +202,8 @@ def valve_view(request, house_code):
 
     if len(errors):
         response['errors'] = errors
+
     response = json.dumps(response)
     return HttpResponse(response, content_type='application/json')
+
+        

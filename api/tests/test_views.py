@@ -1,3 +1,6 @@
+import django
+import api.views
+import api.models
 import rev2
 import mock
 from mock import Mock, patch
@@ -110,6 +113,16 @@ class ApiDebugTest(ApiViewTest):
         
 class ApiValveTest(ApiViewTest):
 
+    @patch('rev2.Rev2Interface.open_valve')
+    def test_valve_post_calls_rev2_interface(self, mock_open_valve):
+        api.models.HouseCode.objects.create(code='FA-32')
+        request = django.http.HttpRequest()
+        request.POST['open'] = 30
+
+        response = api.views.valve_view(request, 'FA-32')
+
+        mock_open_valve.assert_called_once_with(open=30)
+    
     def test_api_url_resolves_valve(self):
         found = resolve('/api/valve/FA-32')
         self.assertEqual(found.func, api.views.valve_view)
@@ -185,6 +198,25 @@ class ApiDocumentationTest(TestCase):
                               
 class ApiHouseCodesTest(ApiViewTest):
 
+    @patch('django.http.HttpRequest')
+    @patch('api.views.led_view')
+    @patch('api.views.valve_view')
+    def test_valve_and_led_states_are_set_to_their_defaults_when_house_codes_are_posted(self, mock_valve_view, mock_led_view, mock_http_request):
+        valve_view_request = mock.Mock()
+        valve_view_request.POST = {}
+        led_view_reuest = mock.Mock()
+        led_view_reuest.POST = {}
+        mock_http_request.side_effect = [valve_view_request, led_view_reuest]
+        
+        response = self.client.post('/api/house-codes', data={'house-codes': 'FA-32'})
+        mock_valve_view.assert_called_once_with(valve_view_request, 'FA-32')
+        self.assertEqual(valve_view_request.POST['open'], 30)
+
+        mock_led_view.assert_called_once_with(led_view_reuest, 'FA-32')
+        self.assertEqual(led_view_reuest.POST['colour'], 0)
+        self.assertEqual(led_view_reuest.POST['state'], 0)
+        self.assertEqual(led_view_reuest.POST['repeat-interval'], 30)
+        
     def test_invalid_format(self):
         response = self.client.post("/api/house-codes", data={"house-codes": "WX-YZ"})
         response = json.loads(response.content)

@@ -4,6 +4,24 @@ import datetime
 import serial
 import mock
 from django.conf import settings
+from abc import ABCMeta
+
+class Rev2Interface:
+
+    def open_valve(self, open):
+        pass
+
+# class Rev2interface:
+#     __metaclass__ = ABCMeta
+
+# class PhysicalRev2Inteface:
+    
+#     def connect(location='/dev/ttyUSB0', baud=4800):
+#         return serial.Serial(location, baud)
+
+#     def poll(house_code):
+        
+
 
 def connect_to_rev2(location='/dev/ttyUSB0', baud=4800):
     return serial.Serial(location, baud)

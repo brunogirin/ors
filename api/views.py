@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
 
+TIMEOUT_STATUS = 301
 INVALID_INPUT_STATUS = 300
 VALID_LED_COLOURS = range(4)
 VALID_LED_STATES = range(4)

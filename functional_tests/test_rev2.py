@@ -1,4 +1,9 @@
+import json
+import requests
+import unittest
+import mock
 import time, datetime
+import api.views
 from .base import FunctionalTest
 
 class Rev2TestCase(FunctionalTest):
@@ -58,7 +63,20 @@ class Rev2TestCase(FunctionalTest):
         response = response['content']
         last_updated_all_3 = response['last-updated-all']
         self.assertNotEqual(last_updated_all_2, last_updated_all_3)
-        
+
+    @mock.patch('rev2.serial.Serial.readline')
+    def test_poll_and_command_retries_when_there_is_no_response(self, mock_readline):
+        mock_readline.return_value = '>' # nothing coming back from the REV2
+
+        # user posts a house code 'FA-32'
+        response = requests.post(self.server_url + '/api/house-codes', data={'house-codes': 'FA-32'})
+        time.sleep(5) # give the cache time to update
+
+        # user sets the valve opening to 50
+        # but the rev2 does not response
+        response = requests.post(self.server_url + '/api/valve/FA-32', data={'open': 50})
+        response = json.loads(response.content)
+        self.assertEqual(response['status'], api.views.TIMEOUT_STATUS)
 
     # @patch('rev2.poll')
     # def test_rev2_is_polled_every_15_minutes(self, mock_poll):

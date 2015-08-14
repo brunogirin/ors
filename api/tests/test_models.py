@@ -8,46 +8,48 @@ from api.models import HouseCode
 
 class HouseCodeTests(TestCase):
 
-    # TODO: move test to test_rev2.py
-    # @mock.patch('rev2.connect_to_rev2')
-    # def test_poll_updates_house_code(self, mock_connect):
-    #     mock_ser = mock.Mock()
-    #     mock_connect.return_value = mock_ser
-    #     mock_ser.readline = mock.Mock()
-    #     mock_ser.readline.side_effect = [
-    #         '>',
-    #         "'*' FA-32 FA-32 false|false|1+37 1+100 1+100 false|50|0 nzcrc",
-    #     ]
-        
-    #     hc = HouseCode.objects.create(code='FA-32')
-    #     rev2.poll(hc)
+    def test_instantiating_a_blank_house_code_raises_a_validation_error(self):
 
-    #     now = datetime.datetime.now()
-    #     self.assertEqual(hc.relative_humidity, 74)
-    #     self.assertEqual(hc.temperature_opentrv, '50.000')
-    #     self.assertEqual(hc.temperature_ds18b20, '25.000')
-    #     self.assertEqual(hc.window, 'closed')
-    #     self.assertEqual(hc.switch, 'off')
-    #     self.assertTrue(now - hc.last_updated_all < datetime.timedelta(seconds=1))
-    #     self.assertTrue(now - hc.last_updated_temperature < datetime.timedelta(seconds=1))
-    #     self.assertEqual(hc.synchronising, 'off')
-    #     self.assertEqual(hc.ambient_light, 205)
+        with self.assertRaises(ValidationError):
+            hc1 = HouseCode(code='')
+
+    def test_save_can_overwrite(self):
+
+        hc1 = HouseCode.objects.create(code='FA-32')
+        hc2 = HouseCode(code='FA-32')
+        hc2.save(overwrite=True)
+        # does not raise error
+
+    def test_overwrite_doesn_not_error_when_no_existing_house_code(self):
+
+        hc1 = HouseCode(code='FA-32')
+        hc1.save(overwrite=True)
+        # does not raise error
+
+    def test_full_clean_can_ignore_duplicates(self):
+
+        hc1 = HouseCode.objects.create(code='FA-32')
+        hc2 = HouseCode(code='FA-32')
+        hc2.full_clean(ignore_duplication=True)
+        # does not raise and error
     
-    def test_duplicates_throw_validation_error(self):
-        HouseCode.objects.create(code="housecode1")
-        house_code = HouseCode(code="housecode1")
-        with self.assertRaises(ValidationError):
-            house_code.full_clean()
-            house_code.save()
-
-    def test_empty_input_throws_validation_error(self):
-        house_code = HouseCode(code="")
-        with self.assertRaises(ValidationError):
-            house_code.full_clean()
-            house_code.save()
+    def test_duplicates_overwrite_eachother(self):
+        HouseCode.objects.create(code="FA-32")
+        house_code = HouseCode(code="FA-32")
+        house_code.save()
+        self.assertEqual(len(HouseCode.objects.all()), 1)
 
     def test_dictionary_conversion(self):
         hc = HouseCode(code='FA-32')
+        hc.relative_humidity = None
+        hc.temperature_opentrv = None
+        hc.temperature_ds18b20 = None
+        hc.window = None
+        hc.switch = None
+        hc.last_updated_all = None
+        hc.last_updated_temperature = None
+        hc.synchronising = None
+        hc.ambient_light = None
         dict_ = OrderedDict()
         dict_['house-code'] = 'FA-32'
         dict_['relative-humidity'] = None
@@ -60,3 +62,4 @@ class HouseCodeTests(TestCase):
         dict_['synchronising'] = None
         dict_['ambient-light'] = None
         self.assertEqual(dict_, hc.to_dict())
+

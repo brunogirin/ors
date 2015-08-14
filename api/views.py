@@ -1,6 +1,7 @@
 import django
 import rev2
 import json
+import api.models
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
@@ -112,14 +113,12 @@ def house_codes(request):
         house_codes = [house_code.code for house_code in HouseCode.objects.all()]
         return HttpResponse(json.dumps({"content": house_codes, "status": 200}), content_type="application/json")
     else:
+        # get unique house codes
         if request.META['CONTENT_TYPE'] == 'application/json':
             house_code_strings = json.loads(request.body)['house-codes']
         else:
             house_code_strings = [hc.strip() for hc in request.POST['house-codes'].split(',')]
-        house_codes = []
         warnings = []
-        errors = []
-
         # check for duplicates
         unique_house_code_strings = []
         duplicates = []
@@ -130,35 +129,93 @@ def house_codes(request):
                 unique_house_code_strings.append(house_code)
         for duplicate in duplicates:
             warnings.append('ignored duplicate: {}'.format(duplicate))
-        
-        for house_code_str in unique_house_code_strings:
-            house_code = HouseCode(code=house_code_str)
-            try:
-                house_code.full_clean()
-                house_codes += [house_code]
-            except ValidationError as e:
-                if str(e) == "{'code': [u'House code with this Code already exists.']}":
-                    house_codes += [house_code]
-                else:
-                    errors.extend(e.message_dict['code'])
-            request2 = django.http.HttpRequest()
-            request2.POST['open'] = 30
-            valve_view(request2, house_code.code)
-            request2 = django.http.HttpRequest()
-            request2.POST['colour'] = 0
-            request2.POST['state'] = 0
-            request2.POST['repeat-interval'] = 30
-            led_view(request2, house_code.code)
 
-        # return error if there are invalid house codes, empty house codes only return a warning
-        if(len(errors)):
+        # validate house codes and verifty they exist
+        house_codes = []
+        errors = []
+        for house_code_str in unique_house_code_strings:
+            try:
+                house_code = api.models.HouseCode(code=house_code_str)
+                rev2.rev2_interface.update_status(house_code=house_code)
+                house_codes.append(house_code)
+            except ValidationError as e:
+                errors.extend(e.message_dict['code'])
+
+        # if they are all valid and exist then delete the old ones and save the new ones
+        if len(errors) == 0:
+            api.models.HouseCode.objects.all().delete()
+            for house_code in house_codes:
+                house_code.save()
+        else:
             response = {'status': INVALID_INPUT_STATUS, 'content': [], 'errors': errors}
             return JsonResponse(response)
+            
+        # # validate house codes and verify they exist
+        # errors = []
+        # try:
+        #     house_codes = [api.models.HouseCode(code=house_code) for house_code in unique_house_code_strings]
+        # except ValidationError as e:
+        #     pass
+        # except api.models.HouseCode.InitialisationError as e:
+        #     pass
+        
+        # # if they are all valid and all exist then delete the old ones and save the new ones
+        # if len(errors) == 0:
+        #     HouseCode.objects.all().delete()
+        #     for hc in house_codes:
+        #         hc.save()
+        # else:
+        #     response = {'status': INVALID_INPUT_STATUS, 'content': [], 'errors': errors}
+        #     return JsonResponse(response)
+            
+        # house_codes = []
+        # for house_code_str in unique_house_code_strings:
+        #     try:
+        #         house_code = api.models.HouseCode(code=house_code_str)
+        #         house_code.full_clean(ignore_duplication=True)
+        #         house_codes.append(house_code)
+        #     except ValidationError as e:
+        #         errors.extend(e.message_dict['code'])
 
-        HouseCode.objects.all().delete()
-        for house_code in house_codes:
-            rev2.poll(house_code)
-            house_code.save()
+        # if len(errors) != 0:
+        #     response = {'status': INVALID_INPUT_STATUS, 'content': [], 'errors': errors}
+        #     return JsonResponse(response)
+
+        # HouseCode.objects.all().delete()
+        # for house_code in house_codes:
+        #     house_code.create()
+
+            # house_code.save()
+            # rev2.rev2_interface.update_status(house_code)
+            
+        #     house_code = api.models.HouseCode(code=house_code_str)
+        #     try:
+        #         house_code.full_clean()
+        #         house_codes += [house_code]
+        #     except ValidationError as e:
+        #         if str(e) == "{'code': [u'House code with this Code already exists.']}":
+        #             house_codes += [house_code]
+        #         else:
+        #             errors.extend(e.message_dict['code'])
+        #     request2 = django.http.HttpRequest()
+        #     request2.POST['open'] = 30
+        #     valve_view(request2, house_code.code)
+        #     request2 = django.http.HttpRequest()
+        #     request2.POST['colour'] = 0
+        #     request2.POST['state'] = 0
+        #     request2.POST['repeat-interval'] = 30
+        #     led_view(request2, house_code.code)
+
+        # # return error if there are invalid house codes, empty house codes only return a warning
+        # if(len(errors)):
+        #     response = {'status': INVALID_INPUT_STATUS, 'content': [], 'errors': errors}
+        #     return JsonResponse(response)
+
+        # HouseCode.objects.all().delete()
+        # for house_code in house_codes:
+        #     # rev2.rev2_interface.update_status(house_code)
+        #     # house_code.save()
+        #     house_code = HouseCode.create(house_code.code)
 
         response = {}
         response["content"] = [hc.code for hc in house_codes]

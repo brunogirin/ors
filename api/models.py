@@ -25,6 +25,7 @@ INVALID_AMBIENT_LIGHT_VALUE_MSG = 'Invalid input for "ambient-light". Received: 
 
 HOUSE_CODE_NOT_FOUND_MSG = "house-code not found: {}"
 
+
 # Create your models here.
 class HouseCode(models.Model):
     code = models.CharField(primary_key=True, max_length=5)
@@ -37,7 +38,38 @@ class HouseCode(models.Model):
     last_updated_temperature = models.DateTimeField(default=None, null=True, blank=True)
     synchronising = models.CharField(max_length=3, choices=[(i, i) for i in VALID_SYNCHRONISING_STATES], default=None, null=True, blank=True)
     ambient_light = models.IntegerField(choices=[(i, i) for i in VALID_AMBIENT_LIGHT_VALUES], default=None, null=True, blank=True)
+    rad_open_percent = models.IntegerField(choices=[(i, i) for i in range(101)], default=None, null=True, blank=True)
+    light_colour = models.IntegerField(choices=[(i, i) for i in range(4)], default=None, null=True, blank=True)
+    light_on_time = models.IntegerField(choices=[(i, i) for i in range(1, 16)], default=None, null=True, blank=True)
+    light_flash = models.IntegerField(choices=[(i, i) for i in range(1, 4)], default=None, null=True, blank=True)
 
+    @staticmethod
+    def generate_random_house_code():
+        pass
+
+    def __init__(self, *args, **kwargs):
+        super(HouseCode, self).__init__(*args, **kwargs)
+        self.full_clean()
+    
+    class InitialisationError(Exception):
+        pass
+
+    def save(self, overwrite=False, *args, **kwargs):
+        if overwrite:
+            try:
+                HouseCode.objects.get(code=self.code).delete()
+            except HouseCode.DoesNotExist:
+                pass
+        super(HouseCode, self).save(*args, **kwargs)
+
+    def full_clean(self, ignore_duplication=False, *args, **kwargs):
+        try:
+            output = super(HouseCode, self).full_clean(*args, **kwargs)
+        except ValidationError as e:
+            if str(e.error_dict) == "{'code': [ValidationError([u'House code with this Code already exists.'])]}":
+                return
+            raise e
+                    
     def __str__(self):
         return str(self.code)
 

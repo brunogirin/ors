@@ -53,20 +53,6 @@ class StatusTest(FunctionalTest):
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], 200)
 
-        expected_content = OrderedDict()
-        expected_content['house-code'] = 'FA-32'
-        expected_content['relative-humidity'] = None
-        expected_content['temperature-opentrv'] = None
-        expected_content['temperature-ds18b20'] = None
-        expected_content['window'] = None
-        expected_content['switch'] = None
-        expected_content['last-updated-all'] = None
-        expected_content['last-updated-temperature'] = None
-        expected_content['synchronising'] = None
-        expected_content['ambient-light'] = None
-        self.assertEqual(json_response['status'], 200)
-        self.assertEqual(json_response['content'], expected_content)
-
 class LedTest(FunctionalTest):
     
     def initialise_page(self):

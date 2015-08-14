@@ -102,16 +102,7 @@ class Rev2EmulatorTest(FunctionalTest):
         self.assertEqual(json_response['status'], INVALID_INPUT_STATUS)
         self.assertEqual(json_response['errors'], [api.models.HOUSE_CODE_NOT_FOUND_MSG.format('FA-32')])
 
-    @patch('rev2.connect_to_rev2')        
-    def test_invalid_inputs(self, mock_connect):
-
-        mock_ser = mock.Mock()
-        mock_connect.return_value = mock_ser
-        mock_ser.readline = mock.Mock()
-        mock_ser.readline.side_effect = [
-            '>',
-            "'*' FA-32 FA-32 false|false|1+25 1+100 1+100 false|50|0 nzcrc",
-        ]
+    def test_invalid_inputs(self):
 
         # user goes to the api page and enters a house code
         self.post_house_code('FA-32')

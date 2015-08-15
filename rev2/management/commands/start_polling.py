@@ -11,7 +11,6 @@ import os
 import api.models
 import rev2
 import time
-import docopt
 import sys
 
 print sys.argv

@@ -7,6 +7,11 @@ import api.models
 from django.conf import settings
 from abc import ABCMeta
 
+class BackgroundPoller:
+
+    def start(self):
+        pass
+
 class Rev2InterfaceBase:
 
     DEFAULT_TIMEOUT = 1
@@ -14,6 +19,10 @@ class Rev2InterfaceBase:
     def __init__(self):
 
         self.connection = self.connect_to_rev2()
+        self.bg_poller = None
+
+    # def bg_poller(self):
+    #     return self._bg_poller
 
     def open_valve(self, open):
         pass
@@ -56,6 +65,16 @@ class Rev2InterfaceBase:
         # raise TimeoutException()
         # return something else
         raise TimeoutException()
+
+    def restart_bg_poller(self, house_codes=None):
+        bg_poller = self.bg_poller
+        if bg_poller:
+            bg_poller.stop()
+        bg_poller = BackgroundPoller()
+        bg_poller.start()
+        self.bg_poller = bg_poller
+        return bg_poller
+
 
 class Rev2PhysicalInterface(Rev2InterfaceBase):
 

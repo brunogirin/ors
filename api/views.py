@@ -146,6 +146,7 @@ def house_codes(request):
             api.models.HouseCode.objects.all().delete()
             for house_code in house_codes:
                 house_code.save()
+            rev2.rev2_interface.restart_bg_pollers(house_codes=house_codes)
         else:
             response = {'status': INVALID_INPUT_STATUS, 'content': [], 'errors': errors}
             return JsonResponse(response)

@@ -11,6 +11,64 @@ class Base(unittest.TestCase):
     def tearDown(self):
         pass
 
+class RestartBGPollersTest(Base):
+
+    def test_stops_existing_bg_poller(self):
+
+        bg_poller = mock.Mock(stop=mock.Mock())
+        rev2.rev2_interface.bg_poller = bg_poller
+
+        rev2.rev2_interface.restart_bg_poller(house_codes=mock.Mock())
+
+        bg_poller.stop.assert_called_once_with()
+    
+    def test_stops_existing_bg_poller(self):
+        bg_poller = mock.Mock()
+        bg_poller.stop = mock.Mock()
+        rev2.rev2_interface.bg_poller = bg_poller
+        
+        rev2.rev2_interface.restart_bg_poller(house_codes=mock.Mock())
+
+        bg_poller.stop.assert_called_once_with()
+
+    def test_no_existing_bg_poller(self):
+        bg_poller = None
+        rev2.rev2_interface.bg_poller = bg_poller
+        
+        rev2.rev2_interface.restart_bg_poller(house_codes=mock.Mock())
+
+        # no exception thrown
+
+    @mock.patch('rev2.BackgroundPoller')
+    def test_new_bg_poller_returned(self, mock_bg_poller):
+
+        bg_poller = mock.Mock()
+        mock_bg_poller.return_value = bg_poller
+
+        self.assertEqual(bg_poller, rev2.rev2_interface.restart_bg_poller(house_codes=mock.Mock()))
+
+    @mock.patch('rev2.BackgroundPoller')
+    def test_starts_the_bg_poller(self, mock_bg_poller):
+
+        bg_poller = mock.Mock()
+        bg_poller.start = mock.Mock()
+        mock_bg_poller.return_value = bg_poller
+
+        rev2.rev2_interface.restart_bg_poller(house_codes=mock.Mock())
+
+        bg_poller.start.assert_called_once_with()
+
+    @mock.patch('rev2.BackgroundPoller')
+    def test_rev2_interface_updates_its_bg_poller(self, mock_bg_poller):
+        old_bg_poller = mock.Mock()
+        rev2.rev2_interface.bg_poller = old_bg_poller
+        new_bg_poller = mock.Mock()
+        mock_bg_poller.return_value = new_bg_poller
+
+        rev2.rev2_interface.restart_bg_poller(house_codes=mock.Mock())
+
+        self.assertEqual(rev2.rev2_interface.bg_poller, new_bg_poller)
+        
 class PollResponseTest(Base):
 
     def test_main(self):

@@ -198,101 +198,28 @@ class ApiDocumentationTest(TestCase):
                               
 class ApiHouseCodesTest(ApiViewTest):
 
-    # @mock.patch('api.models.HouseCode.create')
-    # def test_house_code_is_created(self, mock_create):
-
-    #     request = mock.Mock()
-    #     request.method = 'POST'
-    #     request.META = {'CONTENT_TYPE': 'html'}
-    #     request.POST = {'house-codes': 'FA-32'}
-
-    #     house_code = mock.Mock()
-    #     house_code.save = mock.Mock()
-    #     def check_house_code():
-    #         self.assertEqual(house_code.code, 'FA-32')
-    #         self.assertEqual(house_code.rad_open_percent, 30)
-    #     house_code.save.side_effect = check_house_code
-    #     mock_create.return_value = house_code
-
-    #     api.views.house_codes(request)
-    #     mock_create.assert_called_once_with(house_code='FA-32')
-    
-    # @mock.patch('api.models.HouseCode')
-    # @mock.patch('rev2.Rev2Interface.open_valve')
-    # def test_valve_is_set_to_its_default(self, mock_open_valve, mock_house_code):
-
-    #     request = mock.Mock()
-    #     request.method = 'POST'
-    #     request.META = {'CONTENT_TYPE': 'html'}
-    #     request.POST = {'house-codes': 'FA-32'}
-    #     def check_mock_open_valve(house_code):
-    #         self.assertEqual(house_code.rad_open_percent, 30)
-    #     mock_open_valve.side_effect = check_mock_open_valve
-    #     house_code = mock.Mock()
-    #     house_code.code = 'FA-32'
-    #     mock_house_code.return_value = house_code
+    @mock.patch('api.models.HouseCode')
+    @mock.patch('rev2.Rev2Interface.restart_bg_pollers')
+    def test_starts_a_new_instance(self, mock_restart_bg_pollers, mock_house_code):
+        request = mock.Mock()
+        request.method == 'post'
+        request.POST = {'house-codes': 'FA-32'}
+        request.META = {'CONTENT_TYPE': 'HTML'}
+        house_code = mock.Mock(code='FA-32')
+        mock_house_code.return_value = house_code
         
-    #     api.views.house_codes(request)
+        response = api.views.house_codes(request)
 
-    #     mock_set_rad_valve.assert_called_once_with(house_code=house_code)
-    
-    # @mock.patch('rev2.Rev2Interface.send_poll_and_command')
-    # @mock.patch('api.models.HouseCode')
-    # def test_valve_is_set_to_its_default_when(self, mock_house_code, mock_send_poll_and_command):
+        mock_restart_bg_pollers.assert_called_once_with(house_codes=[house_code])
 
-    #     request = mock.Mock()
-    #     request.method = 'POST'
-    #     request.POST = {'house-codes': 'FA-32'}
-    #     request.META = {'CONTENT_TYPE': 'html'}
+    def test_stops_previous_poller(self):
+        pass
 
-    #     house_code = mock.Mock()
-    #     house_code.code = 'FA-32'
-    #     house_code.save = mock.Mock()
-    #     def check_house_code_save():
-    #         self.assertEqual(house_code.rad_open_percent, 30)
-    #     house_code.save.side_effect = check_house_code_save
-    #     mock_house_code.return_value = house_code
-
-    #     api.views.house_codes(request)
-
-    #     house_code.save.assert_called_once_with()
-
-    # @patch('django.http.HttpRequest')
-    # @patch('api.views.led_view')
-    # @patch('api.views.valve_view')
-    # def test_valve_and_led_states_are_set_to_their_defaults_when_house_codes_are_posted(self, mock_valve_view, mock_led_view, mock_http_request):
-    #     valve_view_request = mock.Mock()
-    #     valve_view_request.POST = {}
-    #     led_view_reuest = mock.Mock()
-    #     led_view_reuest.POST = {}
-    #     mock_http_request.side_effect = [valve_view_request, led_view_reuest]
-        
-    #     response = self.client.post('/api/house-codes', data={'house-codes': 'FA-32'})
-    #     mock_valve_view.assert_called_once_with(valve_view_request, 'FA-32')
-    #     self.assertEqual(valve_view_request.POST['open'], 30)
-
-    #     mock_led_view.assert_called_once_with(led_view_reuest, 'FA-32')
-    #     self.assertEqual(led_view_reuest.POST['colour'], 0)
-    #     self.assertEqual(led_view_reuest.POST['state'], 0)
-    #     self.assertEqual(led_view_reuest.POST['repeat-interval'], 30)
-        
     def test_invalid_format(self):
         response = self.client.post("/api/house-codes", data={"house-codes": "WX-YZ"})
         response = json.loads(response.content)
         self.assertEqual(response['errors'], ['Invalid input for "house-code". Recieved: WX-YZ, expected XX-XX where XX are uppercase hex numbers'])
         self.assertEqual(response['content'], [])
-
-    # @patch('rev2.rev2_interface.update_status')
-    # def test_POST_initialises_cache(self, mock_update_status):
-    #     def side_effect(house_code):
-    #         house_code.relative_humidity = 50
-    #         house_code.save()
-    #     mock_update_status.side_effect = side_effect
-    #     response = self.client.post('/api/house-codes', data={'house-codes': 'FA-32'})
-    #     response = self.client.get('/api/status/FA-32')
-    #     response = json.loads(response.content)
-    #     response = response['content']
-    #     self.assertEqual(response['relative-humidity'], 50)
 
     def test_POST_blank_does_not_save(self):
         self.client.post("/api/house-codes", data={"house-codes": ""})

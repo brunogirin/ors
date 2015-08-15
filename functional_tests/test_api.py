@@ -1,3 +1,5 @@
+import rev2
+import unittest
 import time
 import datetime
 import requests
@@ -6,14 +8,19 @@ import logging
 import django.conf
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 
-class FunctionalTest(StaticLiveServerTestCase):
+class FunctionalTest(unittest.TestCase):
 
-    pass
+    def __init__(self, *args, **kwargs):
+        self.live_server_url = 'http://localhost:8000'
+        super(FunctionalTest, self).__init__(*args, **kwargs)
 
 class ValveApiTest(FunctionalTest):
 
     def test_valve_api(self):
+        print 'test valve'
 
+        rev2.POLLING_FREQUENCY = datetime.timedelta(seconds=10)
+        
         # user posts a house code
         response = requests.post(self.live_server_url + '/api/house-codes', data={'house-codes': 'FA-32'})
         self.assertEqual(response.json()['status'], 200)
@@ -24,9 +31,10 @@ class ValveApiTest(FunctionalTest):
         response = requests.get(self.live_server_url + '/api/status/FA-32')
         self.assertEqual(response.json()['status'], 200)
         initial_status = response.json()['content']
-        # user waits 15 minutes and checks to see the house code object has been updated
-        django.conf.settings.POLLING_FREQUENCY = datetime.timedelta(seconds=10)
-        time.sleep(django.conf.settings.POLLING_FREQUENCY.seconds + 10)
+        time.sleep(rev2.POLLING_FREQUENCY.seconds + 5)
         response = requests.get(self.live_server_url + '/api/status/FA-32')
         updated_status = response.json()['content']
         self.assertNotEqual(initial_status, updated_status)
+        
+    # def tearDown(self):
+    #     rev2.rev2_interface.bg_poller.stop()

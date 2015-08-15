@@ -128,3 +128,4 @@ LOGGING = {
 EMULATE_REV2 = True
 import datetime
 POLLING_FREQEUNCY = datetime.timedelta(minutes=15)
+# POLLING_FREQUENCY = datetime.timedelta(seconds=10)

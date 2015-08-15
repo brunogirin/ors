@@ -11,9 +11,10 @@ class Base(unittest.TestCase):
     def tearDown(self):
         pass
 
+@mock.patch('rev2.BackgroundPoller')
 class RestartBGPollersTest(Base):
 
-    def test_stops_existing_bg_poller(self):
+    def test_stops_existing_bg_poller(self, mock_bg_poller):
 
         bg_poller = mock.Mock(stop=mock.Mock())
         rev2.rev2_interface.bg_poller = bg_poller
@@ -22,7 +23,7 @@ class RestartBGPollersTest(Base):
 
         bg_poller.stop.assert_called_once_with()
     
-    def test_stops_existing_bg_poller(self):
+    def test_stops_existing_bg_poller(self, mock_bg_poller):
         bg_poller = mock.Mock()
         bg_poller.stop = mock.Mock()
         rev2.rev2_interface.bg_poller = bg_poller
@@ -31,7 +32,7 @@ class RestartBGPollersTest(Base):
 
         bg_poller.stop.assert_called_once_with()
 
-    def test_no_existing_bg_poller(self):
+    def test_no_existing_bg_poller(self, mock_bg_poller):
         bg_poller = None
         rev2.rev2_interface.bg_poller = bg_poller
         
@@ -39,7 +40,6 @@ class RestartBGPollersTest(Base):
 
         # no exception thrown
 
-    @mock.patch('rev2.BackgroundPoller')
     def test_new_bg_poller_returned(self, mock_bg_poller):
 
         bg_poller = mock.Mock()
@@ -47,7 +47,6 @@ class RestartBGPollersTest(Base):
 
         self.assertEqual(bg_poller, rev2.rev2_interface.restart_bg_poller(house_codes=mock.Mock()))
 
-    @mock.patch('rev2.BackgroundPoller')
     def test_starts_the_bg_poller(self, mock_bg_poller):
 
         bg_poller = mock.Mock()
@@ -58,7 +57,6 @@ class RestartBGPollersTest(Base):
 
         bg_poller.start.assert_called_once_with()
 
-    @mock.patch('rev2.BackgroundPoller')
     def test_rev2_interface_updates_its_bg_poller(self, mock_bg_poller):
         old_bg_poller = mock.Mock()
         rev2.rev2_interface.bg_poller = old_bg_poller

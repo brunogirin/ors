@@ -109,6 +109,7 @@ def api_documentation(request):
 
 @csrf_exempt
 def house_codes(request):
+    print 'house codes'
     if request.method == "GET":
         house_codes = [house_code.code for house_code in HouseCode.objects.all()]
         return HttpResponse(json.dumps({"content": house_codes, "status": 200}), content_type="application/json")
@@ -142,11 +143,12 @@ def house_codes(request):
                 errors.extend(e.message_dict['code'])
 
         # if they are all valid and exist then delete the old ones and save the new ones
+        print 'house_codes'
         if len(errors) == 0:
             api.models.HouseCode.objects.all().delete()
             for house_code in house_codes:
                 house_code.save()
-            rev2.rev2_interface.restart_bg_pollers(house_codes=house_codes)
+            rev2.rev2_interface.restart_bg_poller(house_codes=house_codes)
         else:
             response = {'status': INVALID_INPUT_STATUS, 'content': [], 'errors': errors}
             return JsonResponse(response)

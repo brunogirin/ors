@@ -1,3 +1,4 @@
+import subprocess
 import mock
 import unittest
 import rev2
@@ -13,8 +14,12 @@ class Base(unittest.TestCase):
 
 class BackgroundPollerTest(Base):
 
-    def test_initialisation(self):
-        pass
+    @mock.patch('subprocess.Popen')
+    def test_start_is_successful(self, mock_subprocess_popen):
+
+        background_poller = rev2.BackgroundPoller()
+        background_poller.start()
+        mock_subprocess_popen.assert_called_once_with(['python', 'manage.py', 'start_polling'])
     
 class PollResponseTest(Base):
 

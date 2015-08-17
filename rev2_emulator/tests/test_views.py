@@ -32,9 +32,14 @@ class GetStatusesTest(TestCase):
 
     def test_multiple_house_code_objects(self):
         hc1 = HouseCode.objects.create(code='FA-32')
-        hc2 = HouseCode.objects.create(code='EE-EE', temperature_opentrv=23.333)
+        hc2 = HouseCode.objects.create(code='11-11')
+
         response = self.client.get('/rev2-emulator/get-statuses')
         response = json.JSONDecoder(object_pairs_hook=collections.OrderedDict).decode(response.content)
+
+        hc1 = HouseCode.objects.get(code='FA-32')
+        hc2 = HouseCode.objects.get(code='11-11')
+        
         self.assertEqual([hc1.to_dict(), hc2.to_dict()], response['content'])
 
 class EmulatorViewTest(TestCase):

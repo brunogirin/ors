@@ -50,7 +50,6 @@ class HouseCode(models.Model):
     def __init__(self, *args, **kwargs):
         super(HouseCode, self).__init__(*args, **kwargs)
         self.full_clean()
-        rev2.rev2_interface.update_status(house_code=self)
     
     class InitialisationError(Exception):
         pass
@@ -99,20 +98,34 @@ class HouseCode(models.Model):
                 raise ValidationError({'switch': INVALID_SWITCH_STATE_MSG.format(self.switch)})
         if self.last_updated_all != None:
             if type(self.last_updated_all) == datetime.datetime:
-                pass
+                from django.utils import timezone
+                try:
+                    self.last_updated_all = timezone.make_aware(self.last_updated_all)
+                except ValueError:
+                    pass
             else:
                 try:
                     import dateutil.parser
                     yourdate = dateutil.parser.parse(self.last_updated_all)
+                    from django.utils import timezone
+                    yourdate = timezone.makeaware(yourdate, timezone.get_current_timezone())
+                    self.last_updated_all = yourdate
                 except (ValueError) as e:
                     raise ValidationError({'last_updated_all': INVALID_LAST_UPDATED_ALL_MSG.format(self.last_updated_all)})
         if self.last_updated_temperature != None:
             if type(self.last_updated_temperature) == datetime.datetime:
-                pass
+                from django.utils import timezone
+                try:
+                    self.last_updated_temperature = timezone.make_aware(self.last_updated_temperature)
+                except ValueError:
+                    pass
             else:
                 try:
                     import dateutil.parser
                     yourdate = dateutil.parser.parse(self.last_updated_temperature)
+                    from django.utils import timezone
+                    yourdate = timezone.makeaware(yourdate, timezone.get_current_timezone())
+                    self.last_updated_temperature = yourdate
                 except (ValueError) as e:
                     raise ValidationError({'last_updated_temperature': INVALID_LAST_UPDATED_TEMPERATURE_DATE_MSG.format(self.last_updated_temperature)})
         if self.synchronising != None:

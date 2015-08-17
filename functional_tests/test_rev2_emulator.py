@@ -32,6 +32,7 @@ class Rev2EmulatorTest(FunctionalTest):
         # user inputs a new temperature-opentrv
         # user inputs a house code that is not in the database
         self.house_code_input.send_keys('FA-32')
+        self.temperature_opentrv_input.clear()
         self.temperature_opentrv_input.send_keys('23.333\n')
         self.response_section = self.browser.find_element_by_id('id-response-section')
         response_code_element = WebDriverWait(self.browser, timeout=30).until(visibility_of_element_located((By.ID, "id-response-code")))
@@ -275,6 +276,7 @@ class Rev2EmulatorTest(FunctionalTest):
         self.temperature_opentrv_input.send_keys('23.233\n')
         # # user then waits for the temperature to update
         self.wait_for_attribute_in_cache('FA-32', 'temperature-opentrv', 23.233)
+        import time
         # user updates the rest of the variables
         # relative_humidity
         self.relative_humidity_input.send_keys('50\n')

@@ -21,7 +21,7 @@ assert len(house_codes), 'input house codes'
 while True:
     time.sleep(polling_frequency)
     for house_code in house_codes:
-        house_code = api.models.HouseCode(code=house_code)
+        house_code = api.models.HouseCode.objects.get(code=house_code)
         rev2.rev2_interface.update_status(house_code=house_code)
         house_code.save()
     

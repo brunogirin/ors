@@ -82,7 +82,6 @@ class LedTest(FunctionalTest):
         json_response = self.get_json_response()
         self.assertEqual(json_response['status'], 200)
         self.assertEqual(json_response['content'], None)
-        print json_response
         
         # TODO: User needs to be able to see the result
         # Currently the LED post does not affect the cache and is just a dummy function

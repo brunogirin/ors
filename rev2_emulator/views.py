@@ -119,11 +119,9 @@ def last_updated_all_view(request):
     response = {'status': 200, 'content': None}
     try:
         hc = HouseCode.objects.get(code=request.POST['house-code'])
-        x = parser.parse(request.POST['last-updated-all'])
-        x = timezone.make_aware(x, timezone.get_current_timezone())
-        hc.last_updated_all = x
+        hc.last_updated_all = request.POST['last-updated-all']
         try:
-            hc.full_clean()
+            x = hc.full_clean()
             hc.save()
         except ValidationError as e:
             response['status'] = INVALID_INPUT_STATUS
@@ -138,9 +136,7 @@ def last_updated_temperature_view(request):
     response = {'status': 200, 'content': None}
     try:
         hc = HouseCode.objects.get(code=request.POST['house-code'])
-        x = parser.parse(request.POST['last-updated-temperature'])
-        x = timezone.make_aware(x, timezone.get_current_timezone())
-        hc.last_updated_temperature = x
+        hc.last_updated_temperature = request.POST['last-updated-temperature']
         try:
             hc.full_clean()
             hc.save()

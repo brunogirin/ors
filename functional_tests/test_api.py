@@ -20,14 +20,12 @@ class FunctionalTest(unittest.TestCase):
 class ValveApiTest(FunctionalTest):
 
     def test_valve_api(self):
-        print 'test valve'
 
         rev2.POLLING_FREQUENCY = datetime.timedelta(seconds=10)
         
         # user posts a house code
         response = requests.post(self.live_server_url + '/api/house-codes', data={'house-codes': 'FA-32'})
         self.assertEqual(response.json()['status'], 200)
-        print response.content
         # user checks it was initialised okay
         response = requests.get(self.live_server_url + '/api/house-codes')
         self.assertIn('FA-32', response.json()['content'])
@@ -40,7 +38,6 @@ class ValveApiTest(FunctionalTest):
         updated_status = response.json()['content']
         self.assertNotEqual(initial_status, updated_status)
 
-        print api.models.HouseCode.objects.all()
         # hc = api.models.HouseCode.objects.get(code='FA-32')
         # print hc.rad_open_percent
         

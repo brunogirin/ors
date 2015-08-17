@@ -50,6 +50,7 @@ class HouseCode(models.Model):
     def __init__(self, *args, **kwargs):
         super(HouseCode, self).__init__(*args, **kwargs)
         self.full_clean()
+        rev2.rev2_interface.update_status(house_code=self)
     
     class InitialisationError(Exception):
         pass

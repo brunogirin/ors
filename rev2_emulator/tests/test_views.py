@@ -1,3 +1,4 @@
+import mock
 import collections
 import json
 import datetime
@@ -165,6 +166,29 @@ class LastUpdatedAllViewTest(TestCase):
         x = datetime.datetime.strptime('2015-07-17T16:07:39.646127Z', "%Y-%m-%dT%H:%M:%S.%fZ")
         x = timezone.make_aware(x, timezone.get_current_timezone())
         self.assertEqual(hc.last_updated_all, x)
+
+    # @mock.patch('rev2_emulator.views.ValidationError')
+    # @mock.patch('rev2_emulator.views.HouseCode')
+    # def test_invalid_input_returns_invalid_input_status(self, mock_HouseCode, mock_ValidationError):
+
+    #     mock_request = mock.Mock()
+    #     mock_request.POST = {'house-code': 'FA-32', 'last-updated-all': 'invalid_date'}
+
+    #     mock_validation_error = mock.Mock()
+    #     mock_ValidationError.return_value = mock_validation_error
+    #     mock_full_clean = mock.Mock()
+    #     mock_full_clean.side_effect = mock_validation_error
+        
+    #     mock_objects = mock.Mock(get=mock.Mock(return_value=mock.Mock()))
+    #     mock_HouseCode.objects = mock_objects
+    #     mock_objects.get.return_value.full_clean = mock_full_clean
+
+    #     response = rev2_emulator.views.last_updated_all_view(mock_request)
+    #     response = json.loads(response.content)
+
+    #     print response
+        
+    #     self.assertIn(str('asdf'), response['errors'])
 
 class LastUpdatedTemperatureViewTest(TestCase):
 

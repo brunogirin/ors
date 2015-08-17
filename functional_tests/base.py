@@ -1,3 +1,6 @@
+import os
+import signal
+import subprocess
 import json
 import sys
 from django.test import LiveServerTestCase, TestCase
@@ -73,5 +76,14 @@ class FunctionalTest(StaticLiveServerTestCase):
 
     def tearDown(self):
         self.browser.quit()
+        p1 = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(['grep', 'python manage.py start_polling'], stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1.stdout.close()
+        output = p2.communicate()[0]
+        for i in output.split('\n'):
+            if i != '' and 'grep' not in i:
+                pid = int(i.strip().split(' ')[0])
+                os.kill(pid, signal.SIGTERM)
         import time
         time.sleep(1)
+        

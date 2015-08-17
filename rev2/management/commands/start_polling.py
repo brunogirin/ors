@@ -13,13 +13,8 @@ import rev2
 import time
 import sys
 
-print sys.argv
-
 polling_frequency = int(sys.argv[2])
 house_codes = sys.argv[3:]
-
-print polling_frequency
-print house_codes
 
 assert len(house_codes), 'input house codes'
 

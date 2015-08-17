@@ -16,10 +16,13 @@ class BackgroundPollerTest(Base):
 
     @mock.patch('subprocess.Popen')
     def test_start_is_successful(self, mock_subprocess_popen):
+        mock_rev2_interface = mock.Mock(POLLING_FREQUENCY=mock.Mock())
+        mock_house_codes = house_codes=[mock.Mock()]
 
-        background_poller = rev2.BackgroundPoller()
-        background_poller.start()
-        mock_subprocess_popen.assert_called_once_with(['python', 'manage.py', 'start_polling'])
+        background_poller = rev2.BackgroundPoller(mock_house_codes)
+        background_poller.start(frequency=mock_rev2_interface.POLLING_FREQUENCY)
+        
+        mock_subprocess_popen.assert_called_once_with(['python', 'manage.py', 'start_polling', str(mock_rev2_interface.POLLING_FREQUENCY.seconds)] + [hc.code for hc in mock_house_codes])
     
 class PollResponseTest(Base):
 

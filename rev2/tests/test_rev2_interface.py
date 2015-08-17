@@ -55,7 +55,7 @@ class RestartBGPollersTest(Base):
 
         rev2.rev2_interface.restart_bg_poller(house_codes=mock.Mock())
 
-        bg_poller.start.assert_called_once_with()
+        bg_poller.start.assert_called_once_with(frequency=rev2.rev2_interface.POLLING_FREQUENCY)
 
     def test_rev2_interface_updates_its_bg_poller(self, mock_bg_poller):
         old_bg_poller = mock.Mock()

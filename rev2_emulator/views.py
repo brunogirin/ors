@@ -1,4 +1,7 @@
 import api.models
+import datetime
+from dateutil import parser
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
@@ -116,7 +119,9 @@ def last_updated_all_view(request):
     response = {'status': 200, 'content': None}
     try:
         hc = HouseCode.objects.get(code=request.POST['house-code'])
-        hc.last_updated_all = request.POST['last-updated-all']
+        x = parser.parse(request.POST['last-updated-all'])
+        x = timezone.make_aware(x, timezone.get_current_timezone())
+        hc.last_updated_all = x
         try:
             hc.full_clean()
             hc.save()
@@ -133,7 +138,9 @@ def last_updated_temperature_view(request):
     response = {'status': 200, 'content': None}
     try:
         hc = HouseCode.objects.get(code=request.POST['house-code'])
-        hc.last_updated_temperature = request.POST['last-updated-temperature']
+        x = parser.parse(request.POST['last-updated-temperature'])
+        x = timezone.make_aware(x, timezone.get_current_timezone())
+        hc.last_updated_temperature = x
         try:
             hc.full_clean()
             hc.save()

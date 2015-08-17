@@ -76,9 +76,11 @@ class FunctionalTest(StaticLiveServerTestCase):
 
     def tearDown(self):
         self.browser.quit()
+        print 'stop background polling processes'
         p1 = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
         p2 = subprocess.Popen(['grep', 'python manage.py start_polling'], stdin=p1.stdout, stdout=subprocess.PIPE)
         p1.stdout.close()
+        print 'polling processes:', output
         output = p2.communicate()[0]
         for i in output.split('\n'):
             if i != '' and 'grep' not in i:

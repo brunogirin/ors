@@ -1,3 +1,4 @@
+import rev2
 import os
 import signal
 import subprocess
@@ -77,19 +78,9 @@ class FunctionalTest(StaticLiveServerTestCase):
     def tearDown(self):
         self.browser.quit()
 
-        output2 = subprocess.check_output(['ps', '-A'])
-        print output2
+        if rev2.rev2_interface.bg_poller:
+            rev2.rev2_interface.bg_poller.stop()
 
-        print 'stop background polling processes'
-        p1 = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
-        p2 = subprocess.Popen(['grep', 'python manage.py start_polling'], stdin=p1.stdout, stdout=subprocess.PIPE)
-        p1.stdout.close()
-        output = p2.communicate()[0]
-        print 'polling processes:', output
-        for i in output.split('\n'):
-            if i != '' and 'grep' not in i:
-                pid = int(i.strip().split(' ')[0])
-                os.kill(pid, signal.SIGTERM)
         import time
         time.sleep(1)
         

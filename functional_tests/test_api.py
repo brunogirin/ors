@@ -42,11 +42,7 @@ class ValveApiTest(FunctionalTest):
         # print hc.rad_open_percent
         
     def tearDown(self):
-        p1 = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
-        p2 = subprocess.Popen(['grep', 'python manage.py start_polling'], stdin=p1.stdout, stdout=subprocess.PIPE)
-        p1.stdout.close()
-        output = p2.communicate()[0]
-        pid = int(output.split(' ')[0])
-        os.kill(pid, signal.SIGTERM)
+        if rev2.rev2_interface.bg_poller:
+            rev2.rev2_interface.bg_poller.stop()
 
             

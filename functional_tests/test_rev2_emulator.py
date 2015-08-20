@@ -1,6 +1,9 @@
+import requests
 import mock
 import json
 import api.models
+import rev2
+from django.conf import settings
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
@@ -12,6 +15,22 @@ from api.models import HOUSE_CODE_NOT_FOUND_MSG, HouseCode
 from mock import patch
 
 class Rev2EmulatorTest(FunctionalTest):
+
+    def test_stop_the_background_polling_service(self):
+        # user posts house code
+        self.post_house_code('FA-32')
+        # initialise the rev2 emulator page
+        self.initialise_page()
+        # stop the bg polling
+        stop_bg_polling_button = self.browser.find_element_by_id("id_stop_bg_polling")
+        stop_bg_polling_button.click()
+        response = requests.get(self.server_url + '/api/status/FA-32')
+        cache = json.loads(response.content)['content']
+        import time
+        time.sleep(rev2.rev2_interface.POLLING_FREQUENCY.seconds + 5)
+        response = requests.get(self.server_url + '/api/status/FA-32')
+        cache2 = json.loads(response.content)['content']
+        self.assertEqual(cache, cache2)
 
     def test_house_code_not_found(self):
         # do this to get the csrf token

@@ -18,6 +18,9 @@
     </section>
 
     <section id="id-post-house-codes-section">
+
+          <p>When you post a new set of house codes a background process will start that will update those house codes every {{ POLLING_FREQUENCY.seconds }} seconds. Since there are no physical sensors connected to the emulator it uses random numbers which are within the allowed value range. Furthermore only the following house codes will work, {{ ALLOWED_HOUSECODES }}. Using a code not in this list corresponds to trying to poll a sensor that is not recognised, in this case a timeout exception will be raised.</p>
+      
       <h2>POST /api/house-codes</h2>
       <form action="/api/house-codes" method="POST"> {% csrf_token %}
 	<input type="text" id="id-house-codes-input" name="house-codes"></textarea>

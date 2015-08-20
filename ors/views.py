@@ -7,7 +7,13 @@ from api.forms import ValveForm
 from api.models import HouseCode, HOUSE_CODE_NOT_FOUND_MSG
 
 def home(request):
-    return render(request, 'ors/home.html', {'valve_form': ValveForm()})
+    import rev2
+    context = {
+        'POLLING_FREQUENCY': rev2.rev2_interface.POLLING_FREQUENCY,
+        'ALLOWED_HOUSECODES': rev2.rev2_interface.EMULATOR_HOUSE_CODES,
+        'valve_form': ValveForm(),
+    }
+    return render(request, 'ors/home.html', context)
 
 def led_view(request):
     response = {'status': 200, 'content': None}

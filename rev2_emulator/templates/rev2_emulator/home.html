@@ -9,6 +9,12 @@
   </header>
   <body>
     <h1>REV2 Emulator</h1>
+
+    <h2>Background Polling</h2>
+    <p>When you post a new set of house codes a background process will start that will update those house codes every {{ POLLING_FREQUENCY.seconds }} seconds. Since there are no physical sensors connected to the emulator it uses random numbers which are within the allowed value range. Furthermore only the following house codes will work, {{ ALLOWED_HOUSECODES }}. Using a code not in this list corresponds to trying to poll a sensor that is not recognised, in this case a timeout exception will be raised.</p>
+    <form action="stop-bg-polling" method="post">
+      <input id="id_stop_bg_polling" type="submit" value="Stop BG Polling">
+    </form>
     
     <table>
       <tr>

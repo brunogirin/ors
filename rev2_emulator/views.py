@@ -28,7 +28,12 @@ def temperature_is_valid(temperature):
         return False
 
 def emulator_view(request):
-    return render(request, 'rev2_emulator/home.html')
+    import rev2
+    context = {
+        'POLLING_FREQUENCY': rev2.rev2_interface.POLLING_FREQUENCY,
+        'ALLOWED_HOUSECODES': rev2.rev2_interface.EMULATOR_HOUSE_CODES,
+    }
+    return render(request, 'rev2_emulator/home.html', context)
 
 @csrf_exempt
 def relative_humidity_view(request):
@@ -190,3 +195,10 @@ def get_statuses(request):
             hc.switch = 'off'
             hc.save()
     return JsonResponse(response)
+
+@csrf_exempt
+def stop_bg_polling(request):
+    import rev2
+    if rev2.rev2_interface.bg_poller:
+        rev2.rev2_interface.bg_poller.stop()
+    return redirect('/rev2-emulator')

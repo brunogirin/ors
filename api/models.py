@@ -43,6 +43,11 @@ class HouseCode(models.Model):
     light_on_time = models.IntegerField(choices=[(i, i) for i in range(1, 16)], default=None, null=True, blank=True)
     light_flash = models.IntegerField(choices=[(i, i) for i in range(1, 4)], default=None, null=True, blank=True)
 
+    def debug(self):
+        rev2_interface = rev2.rev2_interface
+        bg_poller = rev2_interface.bg_poller
+        bg_poller.debug(self)
+    
     @staticmethod
     def generate_random_house_code():
         pass

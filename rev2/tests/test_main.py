@@ -23,6 +23,60 @@ class BackgroundPollerTest(Base):
         background_poller.start(frequency=mock_rev2_interface.POLLING_FREQUENCY)
         
         mock_subprocess_popen.assert_called_once_with(['python', 'manage.py', 'start_polling', str(mock_rev2_interface.POLLING_FREQUENCY.seconds)] + [hc.code for hc in mock_house_codes])
+
+    def test_debug(self):
+        mock_house_code = mock.Mock(code='FA-32')
+        bg_poller = rev2.BackgroundPoller(house_codes=[mock_house_code])
+        # removes house code from existing polling patterns
+        mock_remove_house_code = mock.Mock()
+        bg_poller.remove_house_code = mock_remove_house_code
+        # creates a new debug polling pattern
+        mock_create_debug_polling_pattern = mock.Mock()
+        mock_polling_pattern = mock.Mock()
+        mock_create_debug_polling_pattern.return_value = mock_polling_pattern
+        bg_poller.create_debug_polling_pattern = mock_create_debug_polling_pattern
+        # adds the polling pattern to the bg poller
+        mock_add_polling_pattern = mock.Mock()
+        bg_poller.add_polling_pattern = mock_add_polling_pattern
+        # restarts the bg poller
+        mock_stop_bg_poller = mock.Mock()
+        mock_start_bg_poller = mock.Mock()
+        bg_poller.stop = mock_stop_bg_poller
+        bg_poller.start = mock_start_bg_poller
+        
+        bg_poller.debug(mock_house_code)
+        
+        mock_remove_house_code.assert_called_once_with(mock_house_code)
+        mock_create_debug_polling_pattern.assert_called_once_with(mock_house_code)
+        mock_add_polling_pattern.assert_called_once_with(mock_polling_pattern)
+        mock_stop_bg_poller.assert_called_once_with()
+        mock_start_bg_poller.assert_called_once_with()
+
+    def test_remove_house_code(self):
+
+        mock_house_code = mock.Mock(code='FA-32')
+        bg_poller = rev2.BackgroundPoller(house_codes=[mock_house_code])
+
+        bg_poller.remove_house_code(mock_house_code)
+
+        self.assertNotIn(mock_house_code, bg_poller.polling_patterns[0].house_codes)
+
+    @mock.patch('rev2.DebugPollingPattern')
+    def test_create_debug_polling_pattern(self, mock_DebugPollingPattern):
+
+        mock_house_code = mock.Mock(code='FA-32')
+        bg_poller = rev2.BackgroundPoller(house_codes=[mock_house_code])
+        mock_debug_polling_pattern = mock.Mock()
+        mock_DebugPollingPattern.return_value = mock_debug_polling_pattern
+        polling_pattern = bg_poller.create_debug_polling_pattern(mock_house_code)
+        self.assertEqual(mock_debug_polling_pattern, polling_pattern)
+
+    def test_add_polling_pattern(self):
+
+        mock_polling_pattern = mock.Mock()
+        bg_poller = rev2.BackgroundPoller(house_codes=[])
+        bg_poller.add_polling_pattern(mock_polling_pattern)
+        self.assertEqual(bg_poller.polling_patterns[1], mock_polling_pattern)
     
 class PollResponseTest(Base):
 
@@ -52,16 +106,6 @@ class RandomPollResponseGeneratorTest(Base):
 
         self.assertEqual(output, poll_response)
         mock_house_code_generator.assert_called_once_with()
-
-    # @mock.patch('random.randint')
-    # @mock.patch('api.models.HouseCode.generate_random_house_code')
-    # def test_generated_house_code_is_passed_to_the_poll_response(self, mock_house_code_generator, mock_rand_int):
-
-    #     mock_house_code_generator.return_value = 'FA-32'
-    #     mock_rand_int.side_effect = [0, 0, 0, 0, 0, 0, 1]
-        
-    #     output = rev2.Rev2EmulatorInterface().generate_random_poll_response(house_code=None)
-    #     self.assertEqual(output.response, "'*' FA-32 FA-32 true|true|0+15 0+100 0+100 true|1|0 nzcrc")
         
 class PollAndCommandTest(Base):
 

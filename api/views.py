@@ -98,7 +98,8 @@ def led_view(request, house_code):
 def debug_view(request, house_code):
     response = {'status': 200, 'content': None}
     try:
-        house_code = HouseCode.objects.get(code="house_code")
+        house_code = HouseCode.objects.get(code=house_code)
+        house_code.debug()
     except ObjectDoesNotExist:
         response['status'] = INVALID_INPUT_STATUS
         response['errors'] = [HOUSE_CODE_NOT_FOUND_MSG.format(house_code)]

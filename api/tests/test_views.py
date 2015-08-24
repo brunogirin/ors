@@ -110,6 +110,16 @@ class ApiDebugTest(ApiViewTest):
         response = json.loads(response.content)
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
         self.assertIn(HOUSE_CODE_NOT_FOUND_MSG.format('FA-32'), response['errors'])
+
+    @mock.patch('api.views.HouseCode')
+    def test_debug_called(self, mock_HouseCode):
+        mock_house_code = mock.Mock(debug=mock.Mock())
+        mock_HouseCode.objects = mock.Mock(get=mock.Mock(return_value=mock_house_code))
+        mock_request = mock.Mock()
+        
+        api.views.debug_view(mock_request, 'FA-32')
+
+        mock_house_code.debug.assert_called_once_with()
         
 class ApiValveTest(ApiViewTest):
 

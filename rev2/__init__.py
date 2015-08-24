@@ -9,19 +9,94 @@ from django.conf import settings
 from abc import ABCMeta
 from django.utils import timezone
 
+class PollingPattern:
+    pass
+
+class StandardPollingPattern(PollingPattern):
+    def __init__(self, house_codes):
+        self.house_codes = house_codes
+        self.duration = None
+        self.frequency = rev2_interface.POLLING_FREQUENCY
+        self.start = None
+
+class DebugPollingPattern(PollingPattern):
+    def __init__(self, house_code):
+        self.house_codes = [house_code]
+        self.duration = rev2_interface.DEBUG_DURATION
+        self.frequency = rev2_interface.DEBUG_POLLING_FREQUENCY
+        self.start = None
+
 class BackgroundPoller:
+
+    PKL_LOCATION = 'temp/bg_poller.pkl'
+    
     def __init__(self, house_codes):
         self.process = None
         self.house_codes = house_codes
+        self.polling_patterns = [StandardPollingPattern(house_codes=house_codes)]
 
-    def start(self, frequency):
-        args = ['python', 'manage.py', 'start_polling', '{}'.format(frequency.seconds)]
-        args += [hc.code for hc in self.house_codes]
-        self.process = subprocess.Popen(args)
+    def start(self, bg=True):
+        if bg == False:
+            now = datetime.datetime.now()
+            for polling_pattern in self.polling_patterns:
+                if polling_pattern.start == None:
+                    polling_pattern.start = now
+                    polling_pattern.next = polling_pattern.start + polling_pattern.frequency
+            while True:
+                polling_pattern = self.next()
+                now = datetime.datetime.now()
+                if polling_pattern.next > now:
+                    time.sleep((polling_pattern.next - now).seconds)
+                for house_code in polling_pattern.house_codes:
+                    rev2_interface.update_status(house_code)
+                    house_code.save()
+                polling_pattern.next = polling_pattern.next + polling_pattern.frequency
+                if polling_pattern.duration:
+                    if polling_pattern.next > polling_pattern.start + polling_pattern.duration:
+                        self.polling_patterns.remove(polling_pattern)
+                        for polling_pattern_ in self.polling_patterns:
+                            if isinstance(polling_pattern_, StandardPollingPattern):
+                                polling_pattern_.house_codes.extend(polling_pattern.house_codes)
+                                break
+        else:
+            import cPickle
+            with open(self.PKL_LOCATION, 'wb') as f:
+                cPickle.dump(self, f)
+            args = ['python', 'manage.py', 'start_polling']
+            self.process = subprocess.Popen(args)
+            # args = ['python', 'manage.py', 'start_polling', '{}'.format(frequency.seconds)]
+            # args += [hc.code for hc in self.house_codes]
+            # self.process = subprocess.Popen(args)
+
+    def next(self):
+        next_polling_pattern = None
+        for polling_pattern in self.polling_patterns:
+            if next_polling_pattern == None or polling_pattern.next < next_polling_pattern.next:
+                next_polling_pattern = polling_pattern
+        return next_polling_pattern
 
     def stop(self):
         if self.process:
             self.process.kill()
+
+    def debug(self, house_code):
+        self.remove_house_code(house_code)
+        polling_pattern = self.create_debug_polling_pattern(house_code)
+        self.add_polling_pattern(polling_pattern)
+        self.stop()
+        self.start()
+
+    def remove_house_code(self, house_code):
+        for polling_pattern in self.polling_patterns:
+            if house_code in polling_pattern.house_codes:
+                polling_pattern.house_codes.remove(house_code)
+
+    def create_debug_polling_pattern(self, house_code):
+        polling_pattern = DebugPollingPattern(house_code)
+        return polling_pattern
+
+    def add_polling_pattern(self, polling_pattern):
+        self.polling_patterns.append(polling_pattern)
 
 class Rev2InterfaceBase:
 
@@ -83,12 +158,17 @@ class Rev2InterfaceBase:
         if bg_poller:
             bg_poller.stop()
         bg_poller = BackgroundPoller(house_codes)
-        bg_poller.start(frequency=self.POLLING_FREQUENCY)
+        bg_poller.start()
         self.bg_poller = bg_poller
         return bg_poller
 
 
 class Rev2PhysicalInterface(Rev2InterfaceBase):
+
+    POLLING_FREQUENCY = datetime.timedelta(minutes=15)
+    DEBUG_DURATION = datetime.timedelta(minutes=10)
+    DEBUG_POLLING_FREQUENCY = datetime.timedelta(seconds=10)
+    DEFAULT_TIMEOUT = datetime.timedelta(seconds=10)
 
     def connect_to_rev2(self, location='/dev/ttyUSB0', baud=4800):
         return serial.Serial(location, baud)
@@ -96,7 +176,10 @@ class Rev2PhysicalInterface(Rev2InterfaceBase):
 class Rev2EmulatorInterface(Rev2InterfaceBase):
 
     EMULATOR_HOUSE_CODES = ['FA-32', '11-11', 'E2-E1', '45-40', '3A-01']
-    POLLING_FREQUENCY = datetime.timedelta(seconds=10)
+    POLLING_FREQUENCY = datetime.timedelta(seconds=30)
+    DEBUG_DURATION = datetime.timedelta(seconds=10)
+    DEBUG_POLLING_FREQUENCY = datetime.timedelta(seconds=1)
+    DEFAULT_TIMEOUT = datetime.timedelta(seconds=1)
     
     def connect_to_rev2(self, location=None, baud=None):
         return mock.Mock()
@@ -169,3 +252,5 @@ else:
     Rev2Interface = Rev2PhysicalInterface
 
 rev2_interface = Rev2Interface()
+
+

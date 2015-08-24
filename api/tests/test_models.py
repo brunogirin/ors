@@ -8,6 +8,19 @@ from api.models import HouseCode
 
 class HouseCodeTests(TestCase):
 
+    @mock.patch('rev2.Rev2Interface')
+    def test_debug(self, mock_Rev2Interface):
+        # gets the rev2_interface
+        # gets the bg_poller
+        mock_bg_poller = mock.Mock()
+        rev2.rev2_interface.bg_poller = mock_bg_poller
+
+        house_code = HouseCode(code='FA-32')
+        house_code.debug()
+
+        # tells bg_poller to debug itself
+        mock_bg_poller.debug.assert_called_once_with(house_code)
+
     def test_instantiating_a_blank_house_code_raises_a_validation_error(self):
 
         with self.assertRaises(ValidationError):

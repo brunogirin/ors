@@ -208,7 +208,7 @@ class ApiDocumentationTest(TestCase):
                               
 class ApiHouseCodesTest(ApiViewTest):
 
-    @mock.patch('api.models.HouseCode')
+    @mock.patch('api.models.HouseCode', spec=api.models.HouseCode)
     @mock.patch('rev2.Rev2Interface.restart_bg_poller')
     def test_starts_a_new_bg_poller_instance(self, mock_restart_bg_pollers, mock_house_code):
         request = mock.Mock()

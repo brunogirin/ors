@@ -95,6 +95,7 @@ def led_view(request, house_code):
 
     return JsonResponse(response)
 
+@csrf_exempt
 def debug_view(request, house_code):
     response = {'status': 200, 'content': None}
     try:

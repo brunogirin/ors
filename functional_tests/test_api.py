@@ -40,13 +40,12 @@ class HouseCodesTest(FunctionalTest):
         self.assertEqual(response.json()['status'], 200)
         current_status = response.json()['content']
         self.assertEqual(current_status, initial_status)
-        
+
         # user checks the house code is updated
         time.sleep(10)
         response = requests.get(self.live_server_url + '/api/status/FA-32')
         updated_status = response.json()['content']
         self.assertNotEqual(initial_status, updated_status)
-    
         
 class ValveApiTest(FunctionalTest):
 
@@ -55,19 +54,14 @@ class ValveApiTest(FunctionalTest):
         rev2.POLLING_FREQUENCY = datetime.timedelta(seconds=10)
         
         # user posts a house code
+        # TODO: Post the house code without starting the BG Poller
         response = requests.post(self.live_server_url + '/api/house-codes', data={'house-codes': 'FA-32'})
         self.assertEqual(response.json()['status'], 200)
         # user checks it was initialised okay
         response = requests.get(self.live_server_url + '/api/house-codes')
         self.assertIn('FA-32', response.json()['content'])
         # user checks the initialised values of the house code
-        response = requests.get(self.live_server_url + '/api/status/FA-32')
-        self.assertEqual(response.json()['status'], 200)
-        initial_status = response.json()['content']
-        time.sleep(rev2.POLLING_FREQUENCY.seconds + 5)
-        response = requests.get(self.live_server_url + '/api/status/FA-32')
-        updated_status = response.json()['content']
-        self.assertNotEqual(initial_status, updated_status)
+        # TODO: Make sure the default values are set, 30% open I think and lights off etc
 
 class DebuggingApiTest(FunctionalTest):
     
@@ -98,13 +92,14 @@ class DebuggingApiTest(FunctionalTest):
         # then it should resume its previous behaviour
         # the FA-32 house-code still updates every 5 seconds
         # rev2.rev2_interface.DEBUG_DURATION = datetime.timedelta(seconds=5)
-        print 'call debug on 11-11'
         response = requests.post(self.live_server_url + '/api/debug/11-11')
+        self.assertEqual(response.json()['status'], 200)
         response = requests.get(self.live_server_url + '/api/status/11-11')
         initial_status = response.json()['content']
         initial_status_fa32 = requests.get(self.live_server_url + '/api/status/FA-32').json()['content']
-        time.sleep(0.5)
+        time.sleep(0.8)
         # 0.5 seconds in
+        # check debugging is running on 11-11 but not on FA-32
         for i in range(rev2.rev2_interface.DEBUG_DURATION.seconds):
             time.sleep(rev2.rev2_interface.DEBUG_POLLING_FREQUENCY.seconds)
             response = requests.get(self.live_server_url + '/api/status/11-11')
@@ -115,7 +110,7 @@ class DebuggingApiTest(FunctionalTest):
             response = requests.get(self.live_server_url + '/api/status/FA-32')
             current_status = response.json()['content']
             self.assertEqual(current_status, initial_status_fa32)
-        # debug modes finishes at 36 seconds in
+        # debug modes finishes at 5 seconds in
         # 5.5 seconds in
         for i in range(4):
             time.sleep(1)

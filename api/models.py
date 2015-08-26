@@ -42,6 +42,7 @@ class HouseCode(models.Model):
     light_colour = models.IntegerField(choices=[(i, i) for i in range(4)], default=None, null=True, blank=True)
     light_on_time = models.IntegerField(choices=[(i, i) for i in range(1, 16)], default=None, null=True, blank=True)
     light_flash = models.IntegerField(choices=[(i, i) for i in range(1, 4)], default=None, null=True, blank=True)
+    last_switch_status = models.CharField(max_length=3, choices=[(i, i) for i in VALID_SWITCH_STATES], default=None, null=True, blank=True)
 
     def debug(self):
         rev2_interface = rev2.rev2_interface

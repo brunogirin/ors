@@ -42,11 +42,28 @@ class BackgroundPoller:
                 if polling_pattern.start == None:
                     polling_pattern.start = now
                     polling_pattern.next = polling_pattern.start + polling_pattern.frequency
-            while True:
+
+            while True: # loop through the scheduled updates
                 polling_pattern = self.next()
-                now = datetime.datetime.now()
-                if polling_pattern.next > now:
-                    time.sleep((polling_pattern.next - now).seconds)
+                time_till_next_poll = polling_pattern.next - now
+                while time_till_next_poll > datetime.timedelta(seconds=0): # in between updates keep reading the input
+                    previous_response = None
+                    while True: # while the input is not at the end of the stream
+                        response = rev2_interface.read_input()
+                        if response == '' and previous_response == '': # end of stream
+                            break
+                        response_object = Rev2Response.create_response(rev2_interface.read_input())
+                        if response_object:
+                            rev2_interface.update_status(response_object)
+                            response_object.house_code.save()
+                        previous_response = response
+                    time_till_next_poll = polling_pattern.next - datetime.datetime.now()
+                    if time_till_next_poll < rev2_interface.READ_FREQUENCY:
+                        if time_till_next_poll > datetime.timedelta(seconds=0):
+                            time.sleep(time_till_next_poll.seconds + time_till_next_poll.microseconds / 1e6)
+                        break
+                    else:
+                        time.sleep(rev2_interface.READ_FREQUENCY.seconds + rev2_interface.READ_FREQUENCY.microseconds / 1e6)
                 for house_code in polling_pattern.house_codes:
                     rev2_interface.update_status(house_code)
                     house_code.save()
@@ -64,9 +81,6 @@ class BackgroundPoller:
                 cPickle.dump(self, f)
             args = ['python', 'manage.py', 'start_polling']
             self.process = subprocess.Popen(args)
-            # args = ['python', 'manage.py', 'start_polling', '{}'.format(frequency.seconds)]
-            # args += [hc.code for hc in self.house_codes]
-            # self.process = subprocess.Popen(args)
 
     def next(self):
         next_polling_pattern = None
@@ -125,24 +139,39 @@ class Rev2InterfaceBase:
             else:
                 raise e
 
-    def update_status(self, house_code):
-        poll_and_command = PollAndCommand()
-        poll_and_command.command = '?'
-        poll_and_command.house_code = house_code.code
-        poll_and_command.rad_open_percent = house_code.rad_open_percent
-        poll_and_command.light_colour = house_code.light_colour
-        poll_and_command.light_on_time = house_code.light_on_time
-        poll_and_command.light_flash = house_code.light_flash
-        response = self.send_poll_and_command(poll_and_command)
-        house_code.relative_humidity = response.relative_humidity
-        house_code.temperature_opentrv = response.temperature_opentrv
-        house_code.temperature_ds18b20 = response.temperature_ds18b20
-        house_code.window = response.window
-        house_code.switch = response.switch
-        house_code.last_updated_all = response.last_updated_all
-        house_code.last_updated_temperature = response.last_updated_temperature
-        house_code.synchronising = response.synchronising
-        house_code.ambient_light = response.ambient_light
+    def update_status(self, house_code=None, cc1_alert=None, response=None):
+        if house_code:
+            if self.bg_poller:
+                self.bg_poller.stop()
+            poll_and_command = PollAndCommand()
+            poll_and_command.command = '?'
+            poll_and_command.house_code = house_code
+            poll_and_command.rad_open_percent = house_code.rad_open_percent
+            poll_and_command.light_colour = house_code.light_colour
+            poll_and_command.light_on_time = house_code.light_on_time
+            poll_and_command.light_flash = house_code.light_flash
+            response = self.send_poll_and_command(poll_and_command)
+            response.house_code = house_code
+            self.update_status(response=response)
+            if self.bg_poller:
+                self.bg_poller.start()
+        elif cc1_alert:
+            self.update_status(house_code=cc1_alert.house_code)
+        elif response:
+            house_code = response.house_code
+            house_code.relative_humidity = response.relative_humidity
+            house_code.temperature_opentrv = response.temperature_opentrv
+            house_code.temperature_ds18b20 = response.temperature_ds18b20
+            house_code.window = response.window
+            house_code.last_updated_all = response.last_updated_all
+            house_code.last_updated_temperature = response.last_updated_temperature
+            house_code.synchronising = response.synchronising
+            house_code.ambient_light = response.ambient_light
+            if house_code.last_switch_status != None and house_code.last_switch_status != response.switch:
+                house_code.switch = 'on'
+            house_code.last_switch_status = response.switch
+        else:
+            raise Exception()
 
     def send_and_wait_for_response(self, poll_and_command, timeout=None):
         timeout = timeout if timeout else self.DEFAULT_TIMEOUT
@@ -176,11 +205,12 @@ class Rev2PhysicalInterface(Rev2InterfaceBase):
 class Rev2EmulatorInterface(Rev2InterfaceBase):
 
     EMULATOR_HOUSE_CODES = ['FA-32', '11-11', 'E2-E1', '45-40', '3A-01']
-    POLLING_FREQUENCY = datetime.timedelta(seconds=30)
-    DEBUG_DURATION = datetime.timedelta(seconds=10)
+    POLLING_FREQUENCY = datetime.timedelta(seconds=10)
+    DEBUG_DURATION = datetime.timedelta(seconds=5)
     DEBUG_POLLING_FREQUENCY = datetime.timedelta(seconds=1)
     DEFAULT_TIMEOUT = datetime.timedelta(seconds=1)
-    
+    READ_FREQUENCY = datetime.timedelta(seconds=0.1)
+
     def connect_to_rev2(self, location=None, baud=None):
         return mock.Mock()
 
@@ -188,7 +218,9 @@ class Rev2EmulatorInterface(Rev2InterfaceBase):
     def generate_random_poll_response(house_code=None):
         import random
         if house_code == None:
-            house_code = api.models.HouseCode.generate_random_house_code()
+            house_code_str = api.models.HouseCode.generate_random_house_code()
+        else:
+            house_code_str = house_code.code
         window = ['true', 'false'][random.randint(0, 1)]
         switch = ['true', 'false'][random.randint(0, 1)]
         relative_humidity = random.randint(0, 50)
@@ -196,7 +228,7 @@ class Rev2EmulatorInterface(Rev2InterfaceBase):
         temperature_opentrv = random.randint(0, 199)
         synchronising = ['true', 'false'][random.randint(0, 1)]
         ambient_light = random.randint(1, 62)
-        poll_response = "'*' {house_code} {house_code} ".format(house_code=house_code)
+        poll_response = "'*' {house_code} {house_code} ".format(house_code=house_code_str)
         poll_response += "{window}|{switch}|1+{relative_humidity} ".format(window=window, switch=switch, relative_humidity=relative_humidity)
         poll_response += "1+{temperature_ds18b20} ".format(temperature_ds18b20=temperature_ds18b20)
         poll_response += "1+{temperature_opentrv} ".format(temperature_opentrv=temperature_opentrv)
@@ -205,10 +237,13 @@ class Rev2EmulatorInterface(Rev2InterfaceBase):
         return poll_response
 
     def send_and_wait_for_response(self, poll_and_command, timeout=Rev2InterfaceBase.DEFAULT_TIMEOUT):
-        if poll_and_command.house_code in self.EMULATOR_HOUSE_CODES:
+        if poll_and_command.house_code.code in self.EMULATOR_HOUSE_CODES:
             poll_response = self.generate_random_poll_response(house_code=poll_and_command.house_code)
             return poll_response
         raise TimeoutException()
+
+    def read_input(self):
+        return ''
 
 class TimeoutException(Exception):
     pass
@@ -218,20 +253,40 @@ class PollAndCommand:
     def __str__(self):
         output = "'{command}' {house_code} {house_code} 1+{rad_open_percent} {light_flash}|{light_on_time}|{light_colour} 1 1 nzcrc"
         output = output.format(**{'command': self.command,
-                                'house_code': self.house_code,
+                                'house_code': self.house_code.code,
                                 'rad_open_percent': self.rad_open_percent,
                                 'light_flash': self.light_flash,
                                 'light_on_time': self.light_on_time / 30,
                                 'light_colour': self.light_colour})
         return output
 
+class Rev2Response:
+
+    @staticmethod
+    def create_response(rev2_response):
+        if rev2_response.startswith("'*'"):
+            return PollResponse(rev2_response)
+        elif rev2_response.startswith("'!'"):
+            return CC1Alert(rev2_response)
+        else:
+            return None
+
+class CC1Alert:
+
+    REGEX = "'!' (?P<house_code>[\w\-\d]+) [\w\-\d]+ 1 1 1 1 nzcrc"
+
+    def __init__(self, response):
+        m = re.search(self.REGEX, response)
+        self.house_code = api.models.HouseCode(code=m.group('house_code'))
+    
 class PollResponse:
 
     REGEX = "'\*' (?P<house_code>[\w\-\d]+) [\w\-\d]+ (?P<window>\w+)\|(?P<switch>\w+)\|1\+(?P<relative_humidity>\d+) 1\+(?P<temperature_ds18b20>\d+) 1\+(?P<temperature_opentrv>\d+) (?P<synchronising>\w+)\|(?P<ambient_light>\d+)\|0 nzcrc"
 
     def __init__(self, response):
+        self.response = response
         m = re.search(self.REGEX, response)
-        self.house_code = m.group('house_code')
+        self.house_code = api.models.HouseCode(m.group('house_code'))
         self.relative_humidity = int(m.group('relative_humidity')) * 2
         self.temperature_opentrv = float(m.group('temperature_opentrv')) * 0.25
         self.temperature_ds18b20 = float(m.group('temperature_ds18b20')) * 0.5

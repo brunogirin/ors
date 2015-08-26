@@ -10,7 +10,10 @@ class Base(unittest.TestCase):
 
     def tearDown(self):
         pass
+        
+    
 
+    
 @mock.patch('rev2.BackgroundPoller')
 class RestartBGPollersTest(Base):
 
@@ -55,7 +58,7 @@ class RestartBGPollersTest(Base):
 
         rev2.rev2_interface.restart_bg_poller(house_codes=mock.Mock())
 
-        bg_poller.start.assert_called_once_with(frequency=rev2.rev2_interface.POLLING_FREQUENCY)
+        bg_poller.start.assert_called_once_with()
 
     def test_rev2_interface_updates_its_bg_poller(self, mock_bg_poller):
         old_bg_poller = mock.Mock()
@@ -83,13 +86,13 @@ class SendAndWaitForResponseTest(Base):
 
         valid_house_codes = rev2.Rev2EmulatorInterface.EMULATOR_HOUSE_CODES
         poll_and_command = mock.Mock()
-        poll_and_command.house_code = valid_house_codes[0]
+        poll_and_command.house_code = mock.Mock(code=valid_house_codes[0])
         mock_poll_response_generator.return_value = mock.Mock()
 
         output = rev2.Rev2EmulatorInterface().send_and_wait_for_response(poll_and_command)
 
         self.assertEqual(output, mock_poll_response_generator.return_value)
-        mock_poll_response_generator.assert_called_once_with(house_code=valid_house_codes[0])
+        mock_poll_response_generator.assert_called_once_with(house_code=poll_and_command.house_code)
     
 class SendPollAndCommandTest(Base):
 
@@ -108,15 +111,16 @@ class UpdateStatusTest(Base):
     @mock.patch('rev2.Rev2Interface.send_poll_and_command')
     def test_poll_for_status_updates_housecode_object(self, mock_send_poll_and_command):
 
+        house_code = mock.Mock()
+        house_code.code = 'FA-32'
         poll_response = mock.Mock()
+        poll_response.house_code = house_code
         poll_response.relative_humidity = 50
         poll_response.temperature_ds18b20 = 20
         mock_send_poll_and_command.return_value = poll_response
-        house_code = mock.Mock()
-        house_code.code = 'FA-32'
 
         rev2_interface = rev2.Rev2Interface()
-        rev2_interface.update_status(house_code)
+        rev2_interface.update_status(house_code=house_code)
 
         self.assertEqual(house_code.relative_humidity, 50)
         self.assertEqual(house_code.temperature_ds18b20, 20)
@@ -133,16 +137,15 @@ class UpdateStatusTest(Base):
 
         def check_poll_and_command(poll_and_command):
             self.assertEqual(poll_and_command.command, '?')
-            self.assertEqual(poll_and_command.house_code, house_code.code)
+            self.assertEqual(poll_and_command.house_code, house_code)
             self.assertEqual(poll_and_command.rad_open_percent, 50)
             self.assertEqual(poll_and_command.light_colour, 2)
             self.assertEqual(poll_and_command.light_on_time, 30)
             self.assertEqual(poll_and_command.light_flash, 1)
             return mock.Mock()
             
-        mock_send_poll_and_command.return_value = mock.Mock()
         mock_send_poll_and_command.side_effect = check_poll_and_command
 
-        rev2_interface = rev2.Rev2Interface()
-        rev2_interface.update_status(house_code)
+        rev2_interface = rev2.rev2_interface
+        rev2_interface.update_status(house_code=house_code)
 

@@ -11,9 +11,43 @@ class Base(unittest.TestCase):
     def tearDown(self):
         pass
         
-    
 
-    
+@mock.patch('rev2.PollAndCommand')
+@mock.patch('rev2.Rev2Interface.send_poll_and_command')
+class OpenValveTest(Base):
+
+    def setUp(self):
+        self.mock_house_code = mock.Mock(code='FA-32')
+        self.mock_poll_and_command = mock.Mock()
+        self.mock_response = mock.Mock()
+        self.mock_bg_poller = mock.Mock()
+        rev2.rev2_interface.bg_poller = self.mock_bg_poller
+
+    def test_restarts_bg_poller_if_it_is_running(self, mock_send_poll_and_command, mock_PollAndCommand):
+
+        rev2.rev2_interface.open_valve(self.mock_house_code, 50)
+        
+        self.mock_bg_poller.stop.assert_called_once_with()
+        self.mock_bg_poller.start.assert_called_once_with()
+
+    def test_poll_and_command_instantiated(self, mock_send_poll_and_command, mock_PollAndCommand):
+        mock_PollAndCommand.return_value = self.mock_poll_and_command
+        
+        rev2.rev2_interface.open_valve(self.mock_house_code, 50)
+
+        self.assertEqual(self.mock_poll_and_command.rad_open_percent, 50)
+
+    @mock.patch('rev2.Rev2Interface.update_status')
+    def test_sends_a_poll_response_to_rev2_update_method(self,
+                                                         mock_update_status,
+                                                         mock_send_poll_and_command,
+                                                         mock_PollAndCommand):
+        mock_send_poll_and_command.return_value = self.mock_response
+
+        rev2.rev2_interface.open_valve(self.mock_house_code, 50)
+        
+        mock_update_status.assert_called_once_with(response=self.mock_response)
+
 @mock.patch('rev2.BackgroundPoller')
 class RestartBGPollersTest(Base):
 

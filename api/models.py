@@ -38,7 +38,7 @@ class HouseCode(models.Model):
     last_updated_temperature = models.DateTimeField(default=None, null=True, blank=True)
     synchronising = models.CharField(max_length=3, choices=[(i, i) for i in VALID_SYNCHRONISING_STATES], default=None, null=True, blank=True)
     ambient_light = models.IntegerField(choices=[(i, i) for i in VALID_AMBIENT_LIGHT_VALUES], default=None, null=True, blank=True)
-    rad_open_percent = models.IntegerField(choices=[(i, i) for i in range(101)], default=None, null=True, blank=True)
+    rad_open_percent = models.IntegerField(choices=[(i, i) for i in range(101)], default=30, null=True, blank=True)
     light_colour = models.IntegerField(choices=[(i, i) for i in range(4)], default=None, null=True, blank=True)
     light_on_time = models.IntegerField(choices=[(i, i) for i in range(1, 16)], default=None, null=True, blank=True)
     light_flash = models.IntegerField(choices=[(i, i) for i in range(1, 4)], default=None, null=True, blank=True)
@@ -153,6 +153,7 @@ class HouseCode(models.Model):
         dict_['last-updated-temperature'] = self.last_updated_temperature
         dict_['synchronising'] = self.synchronising
         dict_['ambient-light'] = self.ambient_light
+        dict_['rad-open-percent'] = self.rad_open_percent
         return dict_
     
 class Debug(models.Model):

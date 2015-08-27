@@ -62,6 +62,11 @@ class ValveApiTest(FunctionalTest):
         self.assertIn('FA-32', response.json()['content'])
         # user checks the initialised values of the house code
         # TODO: Make sure the default values are set, 30% open I think and lights off etc
+        response = requests.get(self.live_server_url + '/api/status/FA-32')
+        self.assertEqual(response.json()['content']['rad-open-percent'], 30)
+        response = requests.post(self.live_server_url + '/api/valve/FA-32', data={'open': 50})
+        response = requests.get(self.live_server_url + '/api/status/FA-32')
+        self.assertEqual(response.json()['content']['rad-open-percent'], 50)
 
 class DebuggingApiTest(FunctionalTest):
     
@@ -74,30 +79,17 @@ class DebuggingApiTest(FunctionalTest):
         self.assertEqual(response.json()['status'], 200)
         self.assertIn('FA-32', response.json()['content'])
         self.assertIn('11-11', response.json()['content'])
-        # # user checks the background polling is working (every 10 seconds)
-        # response = requests.get(self.live_server_url + '/api/status/FA-32')
-        # initial_status = response.json()['content']
-        # time.sleep(1)
-        # # 1 second in
-        # for i in range(3):
-        #     time.sleep(rev2.rev2_interface.POLLING_FREQUENCY.seconds)
-        #     response = requests.get(self.live_server_url + '/api/status/FA-32')
-        #     current_status = response.json()['content']
-        #     self.assertNotEqual(current_status, initial_status)
-        #     initial_status = current_status
 
-        # 31 seconds in
         # user calls the api debug method on the 11-11 house code
         # the 11-11 house-code should now update every second for 5 seconds,
         # then it should resume its previous behaviour
-        # the FA-32 house-code still updates every 5 seconds
-        # rev2.rev2_interface.DEBUG_DURATION = datetime.timedelta(seconds=5)
+        # the FA-32 house-code still updates every 10 seconds
         response = requests.post(self.live_server_url + '/api/debug/11-11')
         self.assertEqual(response.json()['status'], 200)
         response = requests.get(self.live_server_url + '/api/status/11-11')
         initial_status = response.json()['content']
         initial_status_fa32 = requests.get(self.live_server_url + '/api/status/FA-32').json()['content']
-        time.sleep(0.8)
+        time.sleep(0.5)
         # 0.5 seconds in
         # check debugging is running on 11-11 but not on FA-32
         for i in range(rev2.rev2_interface.DEBUG_DURATION.seconds):
@@ -119,7 +111,7 @@ class DebuggingApiTest(FunctionalTest):
             self.assertEqual(current_status, initial_status)
         # 9.5 seconds in
         time.sleep(1)
-        # 10.5 seconds in, check the update
+        # 10.5 seconds in, debugging for 11-11 carries on as normal, same for FA-32
         response = requests.get(self.live_server_url + '/api/status/11-11')
         current_status = response.json()['content']
         self.assertNotEqual(initial_status, current_status)

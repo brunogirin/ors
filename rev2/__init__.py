@@ -125,8 +125,22 @@ class Rev2InterfaceBase:
     # def bg_poller(self):
     #     return self._bg_poller
 
-    def open_valve(self, open):
-        pass
+    def open_valve(self, house_code, rad_open_percent):
+        if self.bg_poller:
+            self.bg_poller.stop()
+        poll_and_command = PollAndCommand()
+        poll_and_command.command = '?'
+        poll_and_command.house_code = house_code
+        poll_and_command.rad_open_percent = rad_open_percent
+        poll_and_command.light_colour = house_code.light_colour
+        poll_and_command.light_on_time = house_code.light_on_time
+        poll_and_command.light_flash = house_code.light_flash
+        response = self.send_poll_and_command(poll_and_command)
+        house_code.rad_open_percent = rad_open_percent
+        self.update_status(response=response)
+        house_code.save()
+        if self.bg_poller:
+            self.bg_poller.start()
 
     def send_poll_and_command(self, poll_and_command, retries=0, timeout=None):
         timeout = timeout if timeout else self.DEFAULT_TIMEOUT
@@ -239,6 +253,7 @@ class Rev2EmulatorInterface(Rev2InterfaceBase):
     def send_and_wait_for_response(self, poll_and_command, timeout=Rev2InterfaceBase.DEFAULT_TIMEOUT):
         if poll_and_command.house_code.code in self.EMULATOR_HOUSE_CODES:
             poll_response = self.generate_random_poll_response(house_code=poll_and_command.house_code)
+            poll_response.house_code = poll_and_command.house_code
             return poll_response
         raise TimeoutException()
 

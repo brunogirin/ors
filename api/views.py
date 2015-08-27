@@ -235,7 +235,7 @@ def valve_view_redirect(request):
 
 @csrf_exempt
 def valve_view(request, house_code):
-
+    
     response = {'status': 200, 'content': None}
     errors = []
     data = request.POST
@@ -253,7 +253,7 @@ def valve_view(request, house_code):
         open_input = int(open_input)
         if open_input < 0 or open_input > 100:
             raise ValueError()
-        rev2.Rev2Interface().open_valve(open=open_input)
+        rev2.rev2_interface.open_valve(house_code=house_code, rad_open_percent=open_input)
     except ValueError:
         errors.append('Invalid input for parameter: open. Received: {}, expected: 0-100'.format(open_input))
         response['status'] = INVALID_INPUT_STATUS

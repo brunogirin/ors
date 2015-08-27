@@ -74,5 +74,6 @@ class HouseCodeTests(TestCase):
         dict_['last-updated-temperature'] = None
         dict_['synchronising'] = None
         dict_['ambient-light'] = None
+        dict_['rad-open-percent'] = 30
         self.assertEqual(dict_, hc.to_dict())
 

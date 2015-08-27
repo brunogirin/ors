@@ -99,6 +99,20 @@ class ApiLedTest(ApiViewTest):
         self.assertEqual(response['status'], INVALID_INPUT_STATUS)
         self.assertIn(INVALID_LED_REPEAT_INTERVAL_MSG.format(''), response['errors'])
 
+    @mock.patch('api.models.HouseCode.objects.get')
+    @patch('rev2.Rev2Interface.set_led_settings')
+    def test_led_view_calls_rev2_interface(self, mock_set_led_settings, mock_get_house_code):
+        mock_house_code = mock.Mock(code='FA-32')
+        mock_get_house_code.return_value = mock_house_code
+        request = django.http.HttpRequest()
+        request.POST['colour'] = '0'
+        request.POST['state'] = '0'
+        request.POST['repeat-interval'] = '30'
+
+        response = api.views.led_view(request, 'FA-32')
+
+        mock_set_led_settings.assert_called_once_with(house_code=mock_house_code, colour=0, state=0, repeat_interval=30)
+
 class ApiDebugTest(ApiViewTest):
 
     def test_api_url_resolves(self):
@@ -210,9 +224,10 @@ class ApiDocumentationTest(TestCase):
                               
 class ApiHouseCodesTest(ApiViewTest):
 
+    @mock.patch('rev2.Rev2Interface.update_status')
     @mock.patch('api.models.HouseCode', spec=api.models.HouseCode)
     @mock.patch('rev2.Rev2Interface.restart_bg_poller')
-    def test_starts_a_new_bg_poller_instance(self, mock_restart_bg_pollers, mock_house_code):
+    def test_starts_a_new_bg_poller_instance(self, mock_restart_bg_pollers, mock_house_code, mock_update_status):
         request = mock.Mock()
         request.method == 'post'
         request.POST = {'house-codes': 'FA-32'}

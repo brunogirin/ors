@@ -51,23 +51,42 @@ class ValveApiTest(FunctionalTest):
 
     def test_valve_api(self):
 
-        rev2.POLLING_FREQUENCY = datetime.timedelta(seconds=10)
-        
         # user posts a house code
-        # TODO: Post the house code without starting the BG Poller
         response = requests.post(self.live_server_url + '/api/house-codes', data={'house-codes': 'FA-32'})
         self.assertEqual(response.json()['status'], 200)
         # user checks it was initialised okay
         response = requests.get(self.live_server_url + '/api/house-codes')
         self.assertIn('FA-32', response.json()['content'])
         # user checks the initialised values of the house code
-        # TODO: Make sure the default values are set, 30% open I think and lights off etc
         response = requests.get(self.live_server_url + '/api/status/FA-32')
         self.assertEqual(response.json()['content']['rad-open-percent'], 30)
+        # user updates the valve
         response = requests.post(self.live_server_url + '/api/valve/FA-32', data={'open': 50})
         response = requests.get(self.live_server_url + '/api/status/FA-32')
         self.assertEqual(response.json()['content']['rad-open-percent'], 50)
 
+class LedApiTest(FunctionalTest):
+
+    def test_led_api(self):
+
+        # user posts a house code
+        response = requests.post(self.live_server_url + '/api/house-codes', data={'house-codes': 'FA-32'})
+        self.assertEqual(response.json()['status'], 200)
+        # user checks it was initialised okay
+        response = requests.get(self.live_server_url + '/api/house-codes')
+        self.assertIn('FA-32', response.json()['content'])
+        # user checks the initialised values of the house code
+        response = requests.get(self.live_server_url + '/api/status/FA-32')
+        self.assertEqual(response.json()['content']['led-colour'], 0)
+        self.assertEqual(response.json()['content']['led-state'], 0)
+        self.assertEqual(response.json()['content']['led-repeat-interval'], 30)
+        # user updates the led settings
+        response = requests.post(self.live_server_url + '/api/led/FA-32', data={'colour': 1, 'state': 1, 'repeat-interval': '90'})
+        response = requests.get(self.live_server_url + '/api/status/FA-32')
+        self.assertEqual(response.json()['content']['led-colour'], 1)
+        self.assertEqual(response.json()['content']['led-state'], 1)
+        self.assertEqual(response.json()['content']['led-repeat-interval'], 90)
+        
 class DebuggingApiTest(FunctionalTest):
     
     def test_debugging(self):

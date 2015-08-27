@@ -1,3 +1,4 @@
+import datetime
 import subprocess
 import mock
 import unittest
@@ -113,13 +114,14 @@ class PollAndCommandTest(Base):
 
     def test_poll_and_command_initialises_correctly(self):
 
-        poll_and_command = rev2.PollAndCommand()
-        poll_and_command.command = '?'
-        poll_and_command.house_code = mock.Mock(code='FA-32')
-        poll_and_command.rad_open_percent = 50
-        poll_and_command.light_colour = 2
-        poll_and_command.light_on_time =  30
-        poll_and_command.light_flash =  1
+        mock_house_code = mock.Mock()
+        mock_house_code.code = 'FA-32'
+        mock_house_code.rad_open_percent = 50
+        mock_house_code.light_colour = 2
+        mock_house_code.light_on_time =  30
+        mock_house_code.light_flash =  1
+        mock_house_code.last_updated_all = datetime.datetime.now()
+        poll_and_command = rev2.PollAndCommand(house_code=mock_house_code, set_led_settings=True)
 
         self.assertEqual(poll_and_command.__str__(), "'?' FA-32 FA-32 1+50 1|1|2 1 1 nzcrc")
         

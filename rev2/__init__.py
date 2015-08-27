@@ -128,20 +128,28 @@ class Rev2InterfaceBase:
     def open_valve(self, house_code, rad_open_percent):
         if self.bg_poller:
             self.bg_poller.stop()
-        poll_and_command = PollAndCommand()
-        poll_and_command.command = '?'
-        poll_and_command.house_code = house_code
-        poll_and_command.rad_open_percent = rad_open_percent
-        poll_and_command.light_colour = house_code.light_colour
-        poll_and_command.light_on_time = house_code.light_on_time
-        poll_and_command.light_flash = house_code.light_flash
-        response = self.send_poll_and_command(poll_and_command)
         house_code.rad_open_percent = rad_open_percent
+        poll_and_command = PollAndCommand(house_code=house_code)
+        response = self.send_poll_and_command(poll_and_command)
         self.update_status(response=response)
         house_code.save()
         if self.bg_poller:
             self.bg_poller.start()
 
+    def set_led_settings(self, house_code, colour, state, repeat_interval):
+        if self.bg_poller:
+            self.bg_poller.stop()
+        house_code.light_colour = colour
+        house_code.light_on_time = repeat_interval
+        house_code.light_flash = state
+        poll_and_command = PollAndCommand(house_code=house_code, set_led_settings=True)
+        response = self.send_poll_and_command(poll_and_command)
+        self.update_status(response=response)
+        house_code.save()
+        if self.bg_poller:
+            self.bg_poller.start()
+        
+            
     def send_poll_and_command(self, poll_and_command, retries=0, timeout=None):
         timeout = timeout if timeout else self.DEFAULT_TIMEOUT
         
@@ -157,15 +165,8 @@ class Rev2InterfaceBase:
         if house_code:
             if self.bg_poller:
                 self.bg_poller.stop()
-            poll_and_command = PollAndCommand()
-            poll_and_command.command = '?'
-            poll_and_command.house_code = house_code
-            poll_and_command.rad_open_percent = house_code.rad_open_percent
-            poll_and_command.light_colour = house_code.light_colour
-            poll_and_command.light_on_time = house_code.light_on_time
-            poll_and_command.light_flash = house_code.light_flash
+            poll_and_command = PollAndCommand(house_code=house_code)
             response = self.send_poll_and_command(poll_and_command)
-            response.house_code = house_code
             self.update_status(response=response)
             if self.bg_poller:
                 self.bg_poller.start()
@@ -265,6 +266,30 @@ class TimeoutException(Exception):
 
 class PollAndCommand:
 
+    def __init__(self, house_code, set_led_settings=False):
+        self.command = '?'
+        self.house_code = house_code
+        self.rad_open_percent = house_code.rad_open_percent
+        if set_led_settings == False:
+            now = datetime.datetime.now()
+            # update the light on time to the nearest multiple of 30
+            if house_code.light_colour != 0: # if the led is currently on
+                time_remaining = house_code.last_updated_all + datetime.timedelta(seconds=house_code.light_on_time) - now
+                # round time to nearest factor of 30 seconds
+                time_remaining = datetime.timedelta(seconds=int(round(time_remaining.total_seconds() / 30.) * 30))
+                # if the light on time has elapsed
+                if time_remaining < datetime.timedelta(seconds=30):
+                    # turn off the light
+                    house_code.light_colour = 0
+                    house_code.light_flash = 0
+                    house_code.light_on_time = 30
+                else:
+                    # update the remaining time the light should be on for
+                    house_code.light_on_time = time_remaining.total_seconds()
+        self.light_colour = house_code.light_colour
+        self.light_on_time = 450 if house_code.light_on_time > 450 else house_code.light_on_time # 450 seconds is max time for led
+        self.light_flash = house_code.light_flash
+    
     def __str__(self):
         output = "'{command}' {house_code} {house_code} 1+{rad_open_percent} {light_flash}|{light_on_time}|{light_colour} 1 1 nzcrc"
         output = output.format(**{'command': self.command,

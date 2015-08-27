@@ -1,3 +1,4 @@
+import datetime
 import mock
 import unittest
 import rev2
@@ -31,11 +32,11 @@ class OpenValveTest(Base):
         self.mock_bg_poller.start.assert_called_once_with()
 
     def test_poll_and_command_instantiated(self, mock_send_poll_and_command, mock_PollAndCommand):
-        mock_PollAndCommand.return_value = self.mock_poll_and_command
         
         rev2.rev2_interface.open_valve(self.mock_house_code, 50)
 
-        self.assertEqual(self.mock_poll_and_command.rad_open_percent, 50)
+        self.assertEqual(self.mock_house_code.rad_open_percent, 50)
+        mock_PollAndCommand.assert_called_once_with(house_code=self.mock_house_code)
 
     @mock.patch('rev2.Rev2Interface.update_status')
     def test_sends_a_poll_response_to_rev2_update_method(self,
@@ -147,6 +148,8 @@ class UpdateStatusTest(Base):
 
         house_code = mock.Mock()
         house_code.code = 'FA-32'
+        house_code.last_updated_all = datetime.datetime.now()
+        house_code.light_on_time = 30
         poll_response = mock.Mock()
         poll_response.house_code = house_code
         poll_response.relative_humidity = 50
@@ -161,13 +164,14 @@ class UpdateStatusTest(Base):
 
     @mock.patch('rev2.Rev2Interface.send_poll_and_command')
     def test_update_status_initialises_poll_and_command_object_correctly(self, mock_send_poll_and_command):
-        
+
         house_code = mock.Mock()
         house_code.code = 'FA-32'
         house_code.rad_open_percent = 50
         house_code.light_colour = 2
         house_code.light_on_time = 30
         house_code.light_flash = 1
+        house_code.last_updated_all = datetime.datetime.now()
 
         def check_poll_and_command(poll_and_command):
             self.assertEqual(poll_and_command.command, '?')

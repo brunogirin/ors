@@ -76,7 +76,7 @@ class LedTest(FunctionalTest):
         self.house_code_input.send_keys('FA-32')
         self.colour_input.send_keys('0')
         self.state_input.send_keys('0')
-        self.repeat_interval_input.send_keys('100')
+        self.repeat_interval_input.send_keys('120')
         self.form.submit()
         self.assertEqual(self.browser.current_url, self.server_url + '/api/led/FA-32')
         json_response = self.get_json_response()
